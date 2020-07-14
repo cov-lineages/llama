@@ -11,10 +11,10 @@ setup(name='llama',
       packages=find_packages(),
       scripts=["llama/scripts/Snakefile",
       "llama/scripts/assess_putative_lineage.smk",
+      "llama/scripts/check_metadata.py",
       "llama/scripts/find_closest_in_db.smk",
       "llama/scripts/parse_paf.py",
-      
-      "llama/scripts/process_collapsed_trees.smk",
+      "llama/scripts/process_local_trees.smk",
       "llama/scripts/just_collapse_trees.smk"],
       package_data={"llama":["data/reference.fasta","data/outgroup.fasta"]},
       install_requires=[
