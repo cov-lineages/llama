@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+import csv
+from Bio import SeqIO
+import os
+
+##### Configuration #####
+
+if config.get("force"):
+    config["force"] = "--forceall "
+
+if config["quiet_mode"]=="True":
+    config["quiet_mode"] = "--quiet"
+else:
+    config["quiet_mode"] = ""
+
+config["distance"]=int(config["distance"])
+
+if config["qc_fail"] != "":
+    fail_file = config["qc_fail"]
+    config["qc_fail"] = f"--failed-seqs {fail_file}"
+
+if config["delay_collapse"] == "False":
+    config["delay_collapse"] = False
+elif config["delay_collapse"] == "True":
+    config["delay_collapse"] = True
+
+##### Target rules #####
+rule all:
+    input:
+        os.path.join(config["outdir"],"combined_metadata.csv"),
+        os.path.join(config["outdir"],"local_trees","collapse_report.txt")
+
+
+##### Modules #####
+include: "assess_putative_lineage.smk"
