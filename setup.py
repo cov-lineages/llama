@@ -10,13 +10,13 @@ setup(name='llama',
       version=__version__,
       packages=find_packages(),
       scripts=["llama/scripts/Snakefile",
+      "llama/scripts/assess_putative_lineage.smk",
+      "llama/scripts/find_closest_in_db.smk",
       "llama/scripts/parse_paf.py",
-      "llama/scripts/find_closest_in_tree.smk",
-      "llama/scripts/assess_input_file.smk",
+      
       "llama/scripts/process_collapsed_trees.smk",
-      "llama/scripts/process_catchment_trees.smk",
       "llama/scripts/just_collapse_trees.smk"],
-      package_data={"llama":["data/reference.fasta"},
+      package_data={"llama":["data/reference.fasta","data/outgroup.fasta"]},
       install_requires=[
             "biopython>=1.70",
             "dendropy>=4.4.0",
@@ -29,8 +29,8 @@ setup(name='llama',
             "numpy>=1.13.3"
         ],
       description='Local Lineage and Monophyly Assessment',
-      url='https:cov-lineages.org/llama',
-      author='Aine OToole & Andrew Rambaut',
+      url='github.com/cov-lineages/llama',
+      author='Aine OToole, JT McCrone & Andrew Rambaut',
       author_email='aine.otoole@ed.ac.uk',
       entry_points="""
       [console_scripts]
