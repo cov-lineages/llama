@@ -104,6 +104,8 @@ rule combine_metadata:
     input:
         closest_in_db = rules.get_closest_in_db.output.closest_in_db,
         in_db = rules.check_metadata.output.in_db
+    params:
+        search_field = config["search_field"]
     output:
         combined_csv = os.path.join(config["outdir"],"combined_metadata.csv")
     run:
@@ -115,7 +117,7 @@ rule combine_metadata:
             with open(input.closest_in_db, "r") as f:
                 for l in f:
                     l = l.rstrip("\n")
-                    if "sequence_name" in l:
+                    if params.search_field in l:
                         pass
                     else:
                         fw.write(l + '\n')
