@@ -127,10 +127,10 @@ rule jclusterfunk_context:
         tree = config["tree"],
         metadata = rules.combine_metadata.output.combined_csv
     params:
-        outdir = os.path.join(config["tempdir"],"local_trees"),
+        outdir = os.path.join(config["tempdir"],"catchment_trees"),
         distance = config["distance"]
     output:
-        txt = os.path.join(config["tempdir"],"local_trees","local_trees_summary.txt")
+        txt = os.path.join(config["tempdir"],"catchment_trees","catchment_trees_summary.txt")
     shell:
         """
         #Run andrew's context function
@@ -151,7 +151,7 @@ rule process_local_trees:
         threshold = config["threshold"],
         
         fasta = config["fasta"],
-        tree_dir = os.path.join(config["tempdir"],"local_trees"),
+        tree_dir = os.path.join(config["tempdir"],"catchment_trees"),
 
         cores = workflow.cores,
         force = config["force"],
