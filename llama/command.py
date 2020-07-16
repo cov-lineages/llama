@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from llama import __version__
+import setuptools
 import argparse
 import os.path
 import snakemake
@@ -9,7 +10,6 @@ import tempfile
 import pprint
 import json
 import csv
-import setuptools
 import os
 from datetime import datetime
 from Bio import SeqIO
@@ -163,29 +163,29 @@ def main(sysargs = sys.argv[1:]):
     data_dir = ""
     if args.datadir:
         data_dir = os.path.join(cwd, args.datadir)
-            metadata,seqs,tree = ("","","")
-            
-            seqs = os.path.join(data_dir,"alignment.fasta")
-            
-            metadata = os.path.join(data_dir,"metadata.csv")
+        metadata,seqs,tree = ("","","")
+        
+        seqs = os.path.join(data_dir,"alignment.fasta")
+        
+        metadata = os.path.join(data_dir,"metadata.csv")
 
-            tree = os.path.join(data_dir,"global.tree")
+        tree = os.path.join(data_dir,"global.tree")
 
-            if not os.path.isfile(seqs) or not os.path.isfile(metadata) or not os.path.isfile(tree):
-                sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
-        - alignment.fasta\n\
-        - global.tree\n\
-        - metadata.csv\n""")
-                sys.exit(-1)
-            else:
-                config["seqs"] = seqs
-                config["metadata"] = metadata
-                config["tree"] = tree
+        if not os.path.isfile(seqs) or not os.path.isfile(metadata) or not os.path.isfile(tree):
+            sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
+    - alignment.fasta\n\
+    - global.tree\n\
+    - metadata.csv\n""")
+            sys.exit(-1)
+        else:
+            config["seqs"] = seqs
+            config["metadata"] = metadata
+            config["tree"] = tree
 
-                print("Found data:")
-                print("    -",seqs)
-                print("    -",metadata)
-                print("    -",tree,"\n")
+            print("Found data:")
+            print("    -",seqs)
+            print("    -",metadata)
+            print("    -",tree,"\n")
     else:
         print("No data directory specified, please specify where to find the data files\n")
         sys.exit(-1)
