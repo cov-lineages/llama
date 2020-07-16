@@ -234,14 +234,23 @@ rule remove_str_for_baltic:
                     l = l.replace("'","")
                     fw.write(l)
 
-rule to_nexus:
+rule annotate:
     input:
-        tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick")
+        tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick"),
+        metadata = config["combined_metadata"]
     output:
         tree = os.path.join(config["outdir"],"local_trees","{tree}.tree")
-    run:
-        Phylo.convert(input[0], 'newick', output[0], 'nexus')
-
+    shell:
+        """
+        jclusterfunk annotate \
+        -i {input.tree:q} \
+        -o {output.tree} \
+        -m {input.metadata:q} \
+        -r \
+        --index-column name \
+        --header-fields lineage \
+        -f nexus
+        """
 
 rule summarise_processing:
     input:
