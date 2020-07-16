@@ -2,8 +2,7 @@ from setuptools import setup, find_packages
 import glob
 import os
 import pkg_resources
-# Note: the _program variable is set in __init__.py.
-# it determines the name of the package/final command line tool.
+
 from llama import __version__, _program
 
 setup(name='llama',
