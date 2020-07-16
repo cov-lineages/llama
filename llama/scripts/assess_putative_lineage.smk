@@ -130,16 +130,22 @@ rule jclusterfunk_context:
         outdir = os.path.join(config["tempdir"],"catchment_trees"),
         distance = config["distance"]
     output:
-        txt = os.path.join(config["tempdir"],"catchment_trees","catchment_trees_summary.txt")
+        txt = os.path.join(config["tempdir"],"catchment_trees","catchment_trees_prompt.txt")
     shell:
         """
-        #Run andrew's context function
+        jclusterfunk context \
+        -i {input.tree:q} \
+        -o {params.outdir:q} \
+        -f nexus \
+        -m {input.metadata:q} \
+        --index-column closest \
+        && touch {output.txt:q} 
         """
 
 rule process_local_trees:
     input:
         snakefile = os.path.join(workflow.current_basedir,"process_local_trees.smk"), #alternative snakefiles
-        snakefile_just_collapse = os.path.join(workflow.current_basedir,"just_collapse_trees.smk"),
+        snakefile_just_collapse = os.path.join(workflow.current_basedir,"just_collapse_trees.smk"), #alternative snakefiles
         combined_metadata = rules.combine_metadata.output.combined_csv, 
         query_seqs = rules.get_closest_in_db.output.aligned_query, #datafunk-processed seqs
         context_prompt = rules.jclusterfunk_context.output.txt,
@@ -173,7 +179,7 @@ rule process_local_trees:
 
         if query_seqs !=0:
             print(f"Passing {input.query_seqs} into processing pipeline.")
-            shell(f"snakemake --nolock --snakefile {input.snakefile:q}"
+            shell("snakemake --nolock --snakefile {input.snakefile:q} "
                         "{params.force} "
                         "{params.quiet_mode} "
                         "--directory {params.tempdir:q} "
@@ -182,7 +188,6 @@ rule process_local_trees:
                         "outdir={params.outdir:q} "
                         "tempdir={params.tempdir:q} "
                         "aligned_query_seqs={input.query_seqs:q} "
-                        "all_seqs={input.all_seqs:q} "
                         "seqs={input.seqs:q} "
                         "combined_metadata={input.combined_metadata:q} "
                         "threshold={params.threshold} "
