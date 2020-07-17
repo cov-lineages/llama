@@ -22,8 +22,6 @@ setup(name='llama',
             "pytools>=2020.1",
             'pandas>=1.0.1',
             'pysam>=0.15.4',
-            "matplotlib>=3.2.1",
-            "pweave>=0.30.3",
             "scipy>=1.4.1",
             "numpy>=1.13.3"
         ],
