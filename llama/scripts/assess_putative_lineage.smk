@@ -152,7 +152,8 @@ rule process_local_trees:
         combined_metadata = rules.combine_metadata.output.combined_csv, 
         query_seqs = rules.get_closest_in_db.output.aligned_query, #datafunk-processed seqs
         context_prompt = rules.jclusterfunk_context.output.txt,
-        seqs = config["seqs"]
+        seqs = config["seqs"],
+        reference_fasta = config["reference_fasta"]
     params:
         outdir= config["outdir"],
         tempdir= config["tempdir"],
@@ -190,6 +191,7 @@ rule process_local_trees:
                         f"local_str={local_str} "
                         "outdir={params.outdir:q} "
                         "tempdir={params.tempdir:q} "
+                        "outgroup_fasta={input.reference_fasta} "
                         "aligned_query_seqs={input.query_seqs:q} "
                         "seqs={input.seqs:q} "
                         "combined_metadata={input.combined_metadata:q} "
