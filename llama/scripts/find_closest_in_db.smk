@@ -1,19 +1,4 @@
-"""
-"snakemake --nolock --snakefile {input.snakefile:q} "
-                        "{params.force} "
-                        "{params.quiet_mode} "
-                        "--directory {params.tempdir:q} "
-                        "--config "
-                        "tempdir={params.tempdir:q} "
-                        "reference_fasta={input.reference_fasta:q} "
-                        "seqs={input.seqs:q} "
-                        "metadata={input.metadata:q} "
-                        "to_find_closest={output.to_find_closest:q} "
-                        "search_field={params.search_field} "
-                        "trim_start={params.trim_start} "
-                        "trim_end={params.trim_end} "
-                        "--cores {params.cores}"
-"""
+
 import os
 from Bio import SeqIO
 rule all:
