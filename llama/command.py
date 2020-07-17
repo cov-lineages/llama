@@ -28,15 +28,16 @@ cwd = os.getcwd()
 def main(sysargs = sys.argv[1:]):
 
     parser = argparse.ArgumentParser(prog = _program, 
-    description='llama: Cluster Investivation & Virus Epidemiology Tool', 
+    description='llama: Local Lineage And Monophyly Assessment', 
     usage='''llama <query> [options]''')
 
-    parser.add_argument('query',help="Input csv file with minimally `name` as a column header. Can include additional fields to be incorporated into the analysis, e.g. `sample_date`",)
+    parser.add_argument('query',help="Input csv file with minimally `name` as a column header. Alternatively, `--index-column` can specifiy a column name other than `name`")
     parser.add_argument('-i',"--id-string", action="store_true",help="Indicates the input is a comma-separated id string with one or more query ids. Example: `EDB3588,EDB3589`.", dest="ids")
     parser.add_argument('--fasta', action="store",help="Optional fasta query.", dest="fasta")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument('--datadir', action="store",help="Local directory that contains the data files")
-    parser.add_argument('--search-field', action="store",help="Option to search database for a different id type. Default: gisaid_id", dest="search_field",default="gisaid_id")
+    parser.add_argument('--index-column', action="store",help="Input csv column to match in database. Default: name", dest="index_column",default="name")
+    parser.add_argument('--search-field', action="store",help="Column in database to match with input csv. Default: covv_accession_id", dest="search_field",default="covv_accession_id")
     parser.add_argument('--distance', action="store",help="Extraction from large tree radius. Default: 2", dest="distance",default=2)
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
@@ -113,7 +114,7 @@ def main(sysargs = sys.argv[1:]):
             id_list = args.query.split(",")
             query = os.path.join(tempdir, "query.csv")
             with open(query,"w") as fw:
-                fw.write("gisaid_id\n")
+                fw.write(f"{args.index_column}\n")
                 for i in id_list:
                     fw.write(i+'\n')
         else:
@@ -127,15 +128,15 @@ def main(sysargs = sys.argv[1:]):
     with open(query, newline="") as f:
         reader = csv.DictReader(f)
         column_names = reader.fieldnames
-        if "gisaid_id" not in column_names:
-            sys.stderr.write(f"Error: Input file missing header field `gisaid_id`\n.")
+        if args.index_column not in column_names:
+            sys.stderr.write(f"Error: Input file missing header field {args.index_column}\nEither specifiy `--index-column` or supply a column with header `name`\n")
             sys.exit(-1)
                     
-        print("GISAID ids to process:")
+        print("Input querys to process:")
         for row in reader:
-            queries.append(row["gisaid_id"])
+            queries.append(row[args.index_column])
             
-            print(row["gisaid_id"])
+            print(row[args.index_column])
         print(f"Total: {len(queries)}")
     print('\n')
     # how many threads to pass
@@ -148,7 +149,6 @@ def main(sysargs = sys.argv[1:]):
     # create the config dict to pass through to the snakemake file
     config = {
         "query":query,
-        "fields":",".join(fields),
         "outdir":outdir,
         "tempdir":tempdir,
         "trim_start":265,   # where to pad to using datafunk
@@ -156,6 +156,7 @@ def main(sysargs = sys.argv[1:]):
         "fasta":fasta,
         "rel_outdir":rel_outdir,
         "search_field":args.search_field,
+        "index_column":args.index_column,
         "force":"True"
         }
 
