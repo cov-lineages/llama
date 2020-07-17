@@ -141,10 +141,6 @@ Overview:
 
 Collapsed local trees with your query sequences added in (if optional fasta file supplied).
 
-### Authors
-
-`llama` was created by Áine O'Toole, JT McCrone & Andrew Rambaut.
-
 ### Acknowledgements
 
 `llama` makes use of [`datafunk`](https://github.com/cov-ert/datafunk) and [`clusterfunk`](https://github.com/cov-ert/clusterfunk) functions which have been written by members of the Rambaut Lab, specificially Rachel Colquhoun, JT McCrone, Ben Jackson and Shawn Yu.
