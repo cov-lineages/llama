@@ -33,7 +33,7 @@ def main(sysargs = sys.argv[1:]):
 
     parser.add_argument('query',help="Input csv file with minimally `name` as a column header. Alternatively, `--index-column` can specifiy a column name other than `name`")
     parser.add_argument('-i',"--id-string", action="store_true",help="Indicates the input is a comma-separated id string with one or more query ids. Example: `EDB3588,EDB3589`.", dest="ids")
-    parser.add_argument('--fasta', action="store",help="Optional fasta query.", dest="fasta")
+    parser.add_argument('--fasta', action="store",help="Optional fasta query. Fasta sequence names must exactly match those in your input query.", dest="fasta")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument('--datadir', action="store",help="Local directory that contains the data files")
     parser.add_argument('--index-column', action="store",help="Input csv column to match in database. Default: name", dest="index_column",default="name")
