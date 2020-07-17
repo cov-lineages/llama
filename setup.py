@@ -15,7 +15,7 @@ setup(name='llama',
       "llama/scripts/parse_paf.py",
       "llama/scripts/process_local_trees.smk",
       "llama/scripts/just_collapse_trees.smk"],
-      package_data={"llama":["data/reference.fasta","data/outgroup.fasta"]},
+      package_data={"llama":["data/reference.fasta"]},
       install_requires=[
             "biopython>=1.70",
             "dendropy>=4.4.0",
