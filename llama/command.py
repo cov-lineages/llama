@@ -35,6 +35,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-i',"--id-string", action="store_true",help="Indicates the input is a comma-separated id string with one or more query ids. Example: `EDB3588,EDB3589`.", dest="ids")
     parser.add_argument('--fasta', action="store",help="Optional fasta query. Fasta sequence names must exactly match those in your input query.", dest="fasta")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
+    parser.add_argument("--outgroup",action="store",help="Optional outgroup sequence to root local subtrees. Default an anonymised sequence that is at the base of the global SARS-CoV-2 phylogeny.")
     parser.add_argument('--datadir', action="store",help="Local directory that contains the data files")
     parser.add_argument('--index-column', action="store",help="Input csv column to match in database. Default: name", dest="index_column",default="name")
     parser.add_argument('--search-field', action="store",help="Column in database to match with input csv. Default: covv_accession_id", dest="search_field",default="covv_accession_id")
@@ -236,8 +237,16 @@ def main(sysargs = sys.argv[1:]):
 
 
     # accessing package data and adding to config dict
-    reference_fasta = pkg_resources.resource_filename('llama', 'data/reference.fasta')
-    config["reference_fasta"] = reference_fasta
+    if args.outgroup:
+        reference_fasta = os.path.join(cwd, args.outgroup)
+        if not os.path.isfile(ref_file):
+            sys.stderr.write(f"""Error: cannot find specified outgroup file at {args.outgroup}""")
+            sys.exit(-1)
+        else:
+            config["reference_fasta"] = reference_fasta
+    else:
+        reference_fasta = pkg_resources.resource_filename('llama', 'data/reference.fasta')
+        config["reference_fasta"] = reference_fasta
 
     if args.distance:
         try:
