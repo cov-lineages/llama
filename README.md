@@ -94,6 +94,9 @@ optional arguments:
   --outdir OUTDIR
                         Output directory. Default: current working directory
   --datadir DATADIR     Local directory that contains the data files
+    --outgroup OUTGROUP Optional outgroup sequence to root local subtrees.
+                        Default an anonymised sequence that is at the base of
+                        the global SARS-CoV-2 phylogeny.
   --index-column INDEX_COLUMN
                         Input csv column to match in database. Default: name
   --search-field SEARCH_FIELD
