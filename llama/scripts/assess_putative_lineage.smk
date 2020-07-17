@@ -6,10 +6,11 @@ import collections
 rule check_metadata:
     input:
         query = config["query"],
-        seq = config["seqs"],
+        seqs = config["seqs"],
         metadata = config["metadata"]
     params:
-        field_to_match = config["search_field"]
+        field_to_match = config["search_field"],
+        index_column = config["index_column"]
     output:
         in_db = os.path.join(config["tempdir"],"query_in_db.csv"),
         seqs = os.path.join(config["tempdir"],"query_in_db.fasta"),
@@ -20,6 +21,7 @@ rule check_metadata:
                         --seqs {input.seqs:q} \
                         --metadata {input.metadata:q} \
                         --field {params.field_to_match} \
+                        --index-column {params.index_column} \
                         --in-metadata {output.in_db:q} \
                         --in-seqs {output.seqs:q} \
                         --not-in-db {output.not_in_db:q}
@@ -40,6 +42,7 @@ rule get_closest_in_db:
         force = config["force"],
         fasta = config["fasta"], #use
         search_field = config["search_field"],
+        index_column = config["index_column"],
         query = config["post_qc_query"], #use
         stand_in_query = os.path.join(config["tempdir"], "temp.fasta"),
         trim_start = config["trim_start"],
@@ -55,7 +58,7 @@ rule get_closest_in_db:
         to_find_closest = {}
 
         not_db = []
-        with open(input.not_db_csv, newline = "") as f: # getting list of non-db queries
+        with open(input.not_in_db, newline = "") as f: # getting list of non-db queries
             reader = csv.DictReader(f)
             for row in reader:
                 not_db.append(row[params.search_field])
