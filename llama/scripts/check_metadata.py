@@ -16,6 +16,7 @@ def parse_args():
     parser.add_argument("--seqs", action="store", type=str, dest="seqs")
     parser.add_argument("--metadata", action="store", type=str, dest="metadata")
     parser.add_argument("--field", action="store", type=str, dest="field")
+    parser.add_argument("--index-column", action="store", type=str, dest="index_column")
     parser.add_argument("--in-metadata", action="store", type=str, dest="in_metadata")
     parser.add_argument("--in-seqs", action="store", type=str, dest="in_seqs")
     parser.add_argument("--not-in-db", action="store", type=str, dest="not_in_db")
@@ -28,13 +29,12 @@ def check_db():
     
     in_metadata = []
     in_metadata_names = []
-    column_to_match = args.field
     
     query_names = []
     with open(args.query,newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            query_names.append(row["name"])
+            query_names.append(row[args.index_column])
 
     with open(args.metadata,newline="") as f:
         reader = csv.DictReader(f)
@@ -42,11 +42,11 @@ def check_db():
         for row in reader:
             for seq in query_names:
 
-                db_id = row[column_to_match]
+                db_id = row[args.field]
                 if seq == db_id:
                     
-                    row["query"]=row[column_to_match]
-                    row["closest"]=row[column_to_match]
+                    row["query"]=row[args.field]
+                    row["closest"]=row[args.field]
                     in_metadata.append(row)
                     in_metadata_names.append(seq)
 
@@ -66,13 +66,13 @@ def check_db():
                     fw.write(f">{name} status=in_db\n{record.seq}\n")
     print(f"Number of associated sequences found: {len(found)}")
     with open(args.not_in_db, "w") as fw:
-        print("\nThe following sequences were not found in the db database:")
-        fw.write("name\n")
+        print("\nThe following sequences were not found in the database:")
+        fw.write(f"{args.field}\n")
         for query in query_names:
             if query not in found:
                 fw.write(query + '\n')
                 print(f"\t-{query}")
-        print("If you wish to access sequences in the database\nwith your query, ensure the sequence names are in a matching format.")
+        print("If you wish to access sequences in the database\nwith your query, ensure the sequence names match the names in the metadata format.")
 
 
 if __name__ == '__main__':
