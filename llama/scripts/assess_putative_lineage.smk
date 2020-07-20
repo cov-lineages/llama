@@ -139,9 +139,10 @@ rule jclusterfunk_context:
         jclusterfunk context \
         -i {input.tree:q} \
         -o {params.outdir:q} \
+        --max-parent {params.distance} \
         -f nexus \
         -m {input.metadata:q} \
-        --index-column closest \
+        --id-column closest \
         && touch {output.txt:q} 
         """
 
