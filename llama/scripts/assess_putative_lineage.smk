@@ -136,11 +136,13 @@ rule jclusterfunk_context:
         txt = os.path.join(config["tempdir"],"catchment_trees","catchment_trees_prompt.txt")
     shell:
         """
-        jclusterfunk context \
+        ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk context \
         -i {input.tree:q} \
         -o {params.outdir:q} \
         --max-parent {params.distance} \
         -f nexus \
+        -p local_ \
+        --ignore-missing \
         -m {input.metadata:q} \
         --id-column closest \
         && touch {output.txt:q} 
