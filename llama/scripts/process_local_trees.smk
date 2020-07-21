@@ -8,19 +8,19 @@ config["tree_stems"] = config["local_str"].split(",")
 
 rule all:
     input:
-        expand(os.path.join(config["tempdir"], "collapsed_trees","{tree}.tree"), tree = config["tree_stems"]),
+        expand(os.path.join(config["tempdir"], "collapsed_trees","{tree}.newick"), tree = config["tree_stems"]),
         os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
         expand(os.path.join(config["outdir"],"local_trees","{tree}.tree"), tree = config["tree_stems"])
 
 rule summarise_polytomies:
     input:
-        tree = os.path.join(config["tempdir"], "catchment_trees","{tree}.tree"),
+        tree = os.path.join(config["outdir"], "catchment_trees","{tree}.nexus"),
         metadata = config["combined_metadata"]
     params:
-        tree_dir = os.path.join(config["tempdir"],"catchment_trees"),
+        tree_dir = os.path.join(config["outdir"],"catchment_trees"),
         threshold = config["threshold"]
     output:
-        collapsed_tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.tree"),
+        collapsed_tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.newick"),
         collapsed_information = os.path.join(config["outdir"],"local_trees","{tree}.txt")
     shell:
         """
@@ -28,7 +28,7 @@ rule summarise_polytomies:
         -o {output.collapsed_tree:q} \
         --metadata {input.metadata:q} \
         --index-column closest \
-        --in-format newick \
+        --in-format nexus \
         --out-format newick \
         --threshold {params.threshold} \
         --output-tsv {output.collapsed_information:q}
@@ -73,7 +73,7 @@ rule get_collapsed_representative:
         
 rule extract_taxa:
     input:
-        collapsed_tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.tree")
+        collapsed_tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.nexus")
     output:
         tree_taxa = os.path.join(config["tempdir"], "collapsed_trees","{tree}_taxon_names.txt")
     shell:
@@ -149,10 +149,10 @@ rule hash_for_iqtree:
 
 rule hash_tax_labels:
     input:
-        tree=os.path.join(config["tempdir"],"collapsed_trees","{tree}.tree"),
+        tree=os.path.join(config["tempdir"],"collapsed_trees","{tree}.nexus"),
         hash = rules.hash_for_iqtree.output.hash
     output:
-        tree = os.path.join(config["tempdir"],"renamed_trees","{tree}.tree")
+        tree = os.path.join(config["tempdir"],"renamed_trees","{tree}.nexus")
     shell:
         """
         clusterfunk relabel_tips -i {input.tree:q} \
@@ -179,7 +179,7 @@ rule restore_tip_names:
         tree = rules.iqtree_catchment.output.tree,
         hash = rules.hash_for_iqtree.output.hash
     output:
-        os.path.join(config["tempdir"],"almost_restored_trees","{tree}.tree")
+        os.path.join(config["tempdir"],"almost_restored_trees","{tree}.newick")
     shell:
         """
         clusterfunk relabel_tips -i {input.tree:q} \
@@ -194,10 +194,10 @@ rule restore_tip_names:
 
 rule prune_outgroup:
     input:
-        tree = os.path.join(config["tempdir"],"almost_restored_trees","{tree}.tree"),
+        tree = os.path.join(config["tempdir"],"almost_restored_trees","{tree}.newick"),
         prune = config["outgroup_fasta"]
     output:
-        tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.tree")
+        tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick")
     shell:
         """
         clusterfunk prune -i {input.tree:q} \
@@ -209,7 +209,7 @@ rule prune_outgroup:
 
 rule remove_str_for_baltic:
     input:
-        tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.tree")
+        tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick")
     output:
         tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick")
     run:
@@ -228,13 +228,13 @@ rule annotate:
         tree = os.path.join(config["outdir"],"local_trees","{tree}.tree")
     shell:
         """
-        jclusterfunk annotate \
+        ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk annotate \
         -i {input.tree:q} \
         -o {output.tree} \
         -m {input.metadata:q} \
         -r \
-        --index-column name \
-        --header-fields lineage \
+        --id-column name \
+        --tip-attributes lineage \
         -f nexus
         """
 

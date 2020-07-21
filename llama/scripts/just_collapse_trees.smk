@@ -25,18 +25,18 @@ config["tree_stems"] = config["local_str"].split(",")
 
 rule all:
     input:
-        expand(os.path.join(config["tempdir"], "collapsed_trees","{tree}.tree"), tree = config["tree_stems"]),
+        expand(os.path.join(config["tempdir"], "collapsed_trees","{tree}.newick"), tree = config["tree_stems"]),
         os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
         expand(os.path.join(config["outdir"],"local_trees","{tree}.tree"), tree = config["tree_stems"])
 
 rule summarise_polytomies:
     input:
-        tree = os.path.join(config["tempdir"], "catchment_trees","{tree}.tree"),
+        tree = os.path.join(config["outdir"], "catchment_trees","{tree}.nexus"),
         metadata = config["combined_metadata"]
     params:
-        tree_dir = os.path.join(config["tempdir"],"catchment_trees")
+        tree_dir = os.path.join(config["outdir"],"catchment_trees")
     output:
-        collapsed_tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.tree"),
+        collapsed_tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.newick"),
         collapsed_information = os.path.join(config["outdir"],"local_trees","{tree}.txt")
     shell:
         """
@@ -44,14 +44,14 @@ rule summarise_polytomies:
         -o {output.collapsed_tree:q} \
         --metadata {input.metadata:q} \
         --index-column closest \
-        --in-format newick \
+        --in-format nexus \
         --out-format newick \
         --output-tsv {output.collapsed_information:q}
         """
 
 rule remove_str_for_baltic:
     input:
-        tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.tree")
+        tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.newick")
     output:
         tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.newick")
     run:
@@ -62,14 +62,23 @@ rule remove_str_for_baltic:
                     l = l.replace("'","")
                     fw.write(l)
 
-rule to_nexus:
+rule annotate:
     input:
-        tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.newick")
+        tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.newick"),
+        metadata = config["combined_metadata"]
     output:
         tree = os.path.join(config["outdir"],"local_trees","{tree}.tree")
-    run:
-        Phylo.convert(input[0], 'newick', output[0], 'nexus')
-
+    shell:
+        """
+        ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk annotate \
+        -i {input.tree:q} \
+        -o {output.tree} \
+        -m {input.metadata:q} \
+        -r \
+        --id-column name \
+        --tip-attributes lineage \
+        -f nexus
+        """
 
 rule summarise_processing:
     input:

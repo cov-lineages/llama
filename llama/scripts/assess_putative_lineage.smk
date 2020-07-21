@@ -141,7 +141,7 @@ rule jclusterfunk_context:
         -o {params.outdir:q} \
         --max-parent {params.distance} \
         -f nexus \
-        -p local_ \
+        -p local \
         --ignore-missing \
         -m {input.metadata:q} \
         --id-column closest \
@@ -175,7 +175,7 @@ rule process_local_trees:
         local_trees = []
         for r,d,f in os.walk(params.tree_dir):
             for fn in f:
-                if fn.endswith(".tree"):
+                if fn.endswith(".nexus"):
                     file_stem = ".".join(fn.split(".")[:-1])
                     local_trees.append(file_stem)
         local_str = ",".join(local_trees) #to pass to snakemake pipeline
