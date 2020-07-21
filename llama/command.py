@@ -36,7 +36,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--fasta', action="store",help="Optional fasta query. Fasta sequence names must exactly match those in your input query.", dest="fasta")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument("--outgroup",action="store",help="Optional outgroup sequence to root local subtrees. Default an anonymised sequence that is at the base of the global SARS-CoV-2 phylogeny.")
-    parser.add_argument('--datadir', action="store",help="Local directory that contains the data files")
+    parser.add_argument('-d','--datadir', action="store",help="Local directory that contains the data files")
     parser.add_argument('--index-column', action="store",help="Input csv column to match in database. Default: name", dest="index_column",default="name")
     parser.add_argument('--search-field', action="store",help="Column in database to match with input csv. Default: covv_accession_id", dest="search_field",default="covv_accession_id")
     parser.add_argument('--distance', action="store",help="Extraction from large tree radius. Default: 2", dest="distance",default=2)
@@ -119,7 +119,7 @@ def main(sysargs = sys.argv[1:]):
                 for i in id_list:
                     fw.write(i+'\n')
         else:
-            sys.stderr.write(f"Error: cannot find query file at {query}\n Check if the file exists, or if you're inputting an id string (e.g. EPI12345,EPI23456), please use in conjunction with the `--id-string` flag\n.")
+            sys.stderr.write(f"Error: cannot find query file at {query}\nCheck if the file exists, or if you're inputting an id string (e.g. EPI12345,EPI23456), please use in conjunction with the `--id-string` flag\n.")
             sys.exit(-1)
     else:
         print(f"Input file: {query}")
