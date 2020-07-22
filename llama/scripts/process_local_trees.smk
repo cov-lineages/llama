@@ -20,7 +20,7 @@ rule annotate:
     params:
         id_column = config["search_field"]
     output:
-        tree = os.path.join(config["outdir"],"annotated_trees","{tree}.tree")
+        tree = os.path.join(config["outdir"],"annotated_trees","{tree}.nexus")
     shell:
         """
         ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk annotate \
@@ -35,7 +35,7 @@ rule annotate:
 
 rule summarise_polytomies:
     input:
-        tree = os.path.join(config["outdir"], "annotated_trees","{tree}.tree"),
+        tree = os.path.join(config["outdir"], "annotated_trees","{tree}.nexus"),
         metadata = config["combined_metadata"]
     params:
         tree_dir = os.path.join(config["outdir"],"catchment_trees"),
