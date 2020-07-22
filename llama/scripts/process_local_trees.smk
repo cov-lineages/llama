@@ -12,9 +12,30 @@ rule all:
         os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
         expand(os.path.join(config["outdir"],"local_trees","{tree}.tree"), tree = config["tree_stems"])
 
+
+rule annotate:
+    input:
+        tree = os.path.join(config["tempdir"],"catchment_trees","{tree}.nexus"),
+        metadata = config["combined_metadata"]
+    params:
+        id_column = config["search_field"]
+    output:
+        tree = os.path.join(config["outdir"],"annotated_trees","{tree}.tree")
+    shell:
+        """
+        ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk annotate \
+        -i {input.tree:q} \
+        -o {output.tree} \
+        -m {input.metadata:q} \
+        -r \
+        --id-column closest \
+        --tip-attributes lineage \
+        -f nexus
+        """
+
 rule summarise_polytomies:
     input:
-        tree = os.path.join(config["outdir"], "catchment_trees","{tree}.nexus"),
+        tree = os.path.join(config["outdir"], "annotated_trees","{tree}.tree"),
         metadata = config["combined_metadata"]
     params:
         tree_dir = os.path.join(config["outdir"],"catchment_trees"),
@@ -211,7 +232,7 @@ rule remove_str_for_baltic:
     input:
         tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick")
     output:
-        tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick")
+        tree = os.path.join(config["tempdir"],"local_trees","{tree}.newick")
     run:
         with open(output.tree,"w") as fw:
             with open(input.tree, "r") as f:
@@ -220,23 +241,6 @@ rule remove_str_for_baltic:
                     l = l.replace("'","")
                     fw.write(l)
 
-rule annotate:
-    input:
-        tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick"),
-        metadata = config["combined_metadata"]
-    output:
-        tree = os.path.join(config["outdir"],"local_trees","{tree}.tree")
-    shell:
-        """
-        ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk annotate \
-        -i {input.tree:q} \
-        -o {output.tree} \
-        -m {input.metadata:q} \
-        -r \
-        --id-column name \
-        --tip-attributes lineage \
-        -f nexus
-        """
 
 rule summarise_processing:
     input:

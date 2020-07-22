@@ -75,7 +75,7 @@ rule annotate:
         -o {output.tree} \
         -m {input.metadata:q} \
         -r \
-        --id-column name \
+        --id-column closest \
         --tip-attributes lineage \
         -f nexus
         """
