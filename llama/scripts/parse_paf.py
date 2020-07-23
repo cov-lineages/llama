@@ -13,7 +13,7 @@ def parse_args():
 
     parser.add_argument("--paf", action="store", type=str, dest="paf")
     parser.add_argument("--metadata", action="store", type=str, dest="metadata")
-    parser.add_argument("--search-field", action="store",type=str, dest="search_field")
+    parser.add_argument("--data-column", action="store",type=str, dest="data_column")
     parser.add_argument("--csv-out", action="store", type=str, dest="outfile")
     parser.add_argument("--seqs", action="store", type=str, dest="seqs")
     parser.add_argument("--seqs-out", action="store", type=str, dest="seqs_out")
@@ -45,7 +45,7 @@ def parse_paf_and_get_metadata():
     args = parse_args()
 
     closest_to_query = get_closest_sequences(args.paf)
-    column_to_match = args.search_field
+    column_to_match = args.data_column
     
     with open(args.metadata, newline="") as f:
         rows_to_write = []

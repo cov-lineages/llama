@@ -37,8 +37,8 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument("--outgroup",action="store",help="Optional outgroup sequence to root local subtrees. Default an anonymised sequence that is at the base of the global SARS-CoV-2 phylogeny.")
     parser.add_argument('-d','--datadir', action="store",help="Local directory that contains the data files")
-    parser.add_argument('--index-column', action="store",help="Input csv column to match in database. Default: name", dest="index_column",default="name")
-    parser.add_argument('--search-field', action="store",help="Column in database to match with input csv. Default: covv_accession_id", dest="search_field",default="covv_accession_id")
+    parser.add_argument('--input-column', action="store",help="Column in input csv file to match with database. Default: name", dest="input_column",default="name")
+    parser.add_argument('--data-column', action="store",help="Column in database to match with input csv file. Default: sequence_name", dest="data_column",default="sequence_name")
     parser.add_argument('--distance', action="store",help="Extraction from large tree radius. Default: 2", dest="distance",default=2)
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
@@ -115,7 +115,7 @@ def main(sysargs = sys.argv[1:]):
             id_list = args.query.split(",")
             query = os.path.join(tempdir, "query.csv")
             with open(query,"w") as fw:
-                fw.write(f"{args.index_column}\n")
+                fw.write(f"{args.input_column}\n")
                 for i in id_list:
                     fw.write(i+'\n')
         else:
@@ -129,17 +129,18 @@ def main(sysargs = sys.argv[1:]):
     with open(query, newline="") as f:
         reader = csv.DictReader(f)
         column_names = reader.fieldnames
-        if args.index_column not in column_names:
-            sys.stderr.write(f"Error: Input file missing header field {args.index_column}\nEither specifiy `--index-column` or supply a column with header `name`\n")
+        if args.input_column not in column_names:
+            sys.stderr.write(f"Error: Input file missing header field {args.input_column}\nEither specifiy `--input-column` or supply a column with header `name`\n")
             sys.exit(-1)
                     
         print("Input querys to process:")
         for row in reader:
-            queries.append(row[args.index_column])
+            queries.append(row[args.input_column])
             
-            print(row[args.index_column])
+            print(row[args.input_column])
         print(f"Total: {len(queries)}")
     print('\n')
+
     # how many threads to pass
     if args.threads:
         threads = args.threads
@@ -156,8 +157,8 @@ def main(sysargs = sys.argv[1:]):
         "trim_end":29674,   # where to pad after using datafunk
         "fasta":fasta,
         "rel_outdir":rel_outdir,
-        "search_field":args.search_field,
-        "index_column":args.index_column,
+        "input_column":args.input_column,
+        "data_column":args.data_column,
         "force":"True"
         }
 
@@ -192,6 +193,13 @@ def main(sysargs = sys.argv[1:]):
         print("No data directory specified, please specify where to find the data files\n")
         sys.exit(-1)
 
+    # parse the input db, check col headers
+    with open(metadata, newline="") as f:
+        reader = csv.DictReader(f)
+        column_names = reader.fieldnames
+        if args.data_column not in column_names:
+            sys.stderr.write(f"Error: Metadata file missing header field {args.data_column}\nEither specifiy `--data-column` or supply a column with header `sequence_name`\n")
+            sys.exit(-1)
     """ 
     QC steps:
     1) check csv header

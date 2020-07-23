@@ -1,4 +1,3 @@
-
 import os
 from Bio import SeqIO
 rule all:
@@ -57,7 +56,7 @@ rule parse_paf:
         metadata = config["metadata"],
         fasta = config["seqs"]
     params:
-        search_field = config["search_field"]
+        data_column = config["data_column"]
     output:
         fasta = os.path.join(config["tempdir"],"closest_in_db.fasta"),
         csv = os.path.join(config["tempdir"],"closest_in_db.csv")
@@ -69,5 +68,5 @@ rule parse_paf:
         --seqs {input.fasta:q} \
         --csv-out {output.csv:q} \
         --seqs-out {output.fasta:q} \
-        --search-field {params.search_field}
+        --data-column {params.data_column}
         """

@@ -9,8 +9,8 @@ rule check_metadata:
         seqs = config["seqs"],
         metadata = config["metadata"]
     params:
-        field_to_match = config["search_field"],
-        index_column = config["index_column"]
+        input_column = config["input_column"],
+        data_column = config["data_column"]
     output:
         in_db = os.path.join(config["tempdir"],"query_in_db.csv"),
         seqs = os.path.join(config["tempdir"],"query_in_db.fasta"),
@@ -20,8 +20,8 @@ rule check_metadata:
         check_metadata.py --query {input.query:q} \
                         --seqs {input.seqs:q} \
                         --metadata {input.metadata:q} \
-                        --field {params.field_to_match} \
-                        --index-column {params.index_column} \
+                        --input-column {params.input_column} \
+                        --data-column {params.data_column} \
                         --in-metadata {output.in_db:q} \
                         --in-seqs {output.seqs:q} \
                         --not-in-db {output.not_in_db:q}
@@ -41,8 +41,8 @@ rule get_closest_in_db:
         cores = workflow.cores,
         force = config["force"],
         fasta = config["fasta"], #use
-        search_field = config["search_field"],
-        index_column = config["index_column"],
+        input_column = config["input_column"],
+        data_column = config["data_column"],
         query = config["post_qc_query"], #use
         stand_in_query = os.path.join(config["tempdir"], "temp.fasta"),
         trim_start = config["trim_start"],
@@ -61,7 +61,7 @@ rule get_closest_in_db:
         with open(input.not_in_db, newline = "") as f: # getting list of non-db queries
             reader = csv.DictReader(f)
             for row in reader:
-                not_db.append(row[params.search_field])
+                not_db.append(row[params.input_column])
 
         if params.fasta != "":
              # get set with supplied sequences
@@ -91,7 +91,7 @@ rule get_closest_in_db:
                         "seqs={input.seqs:q} "
                         "metadata={input.metadata:q} "
                         "to_find_closest={output.to_find_closest:q} "
-                        "search_field={params.search_field} "
+                        "data_column={params.data_column} "
                         "trim_start={params.trim_start} "
                         "trim_end={params.trim_end} "
                         "--cores {params.cores}")
@@ -108,7 +108,7 @@ rule combine_metadata:
         closest_in_db = rules.get_closest_in_db.output.closest_in_db,
         in_db = rules.check_metadata.output.in_db
     params:
-        search_field = config["search_field"]
+        data_column = config["data_column"]
     output:
         combined_csv = os.path.join(config["outdir"],"combined_metadata.csv")
     run:
@@ -120,7 +120,7 @@ rule combine_metadata:
             with open(input.closest_in_db, "r") as f:
                 for l in f:
                     l = l.rstrip("\n")
-                    if params.search_field in l:
+                    if params.data_column in l:
                         pass
                     else:
                         fw.write(l + '\n')

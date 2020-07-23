@@ -17,8 +17,6 @@ rule annotate:
     input:
         tree = os.path.join(config["tempdir"],"catchment_trees","{tree}.nexus"),
         metadata = config["combined_metadata"]
-    params:
-        id_column = config["search_field"]
     output:
         tree = os.path.join(config["outdir"],"annotated_trees","{tree}.nexus")
     shell:
@@ -232,7 +230,7 @@ rule remove_str_for_baltic:
     input:
         tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick")
     output:
-        tree = os.path.join(config["tempdir"],"local_trees","{tree}.newick")
+        tree = os.path.join(config["tempdir"],"local_trees","{tree}.tree")
     run:
         with open(output.tree,"w") as fw:
             with open(input.tree, "r") as f:
