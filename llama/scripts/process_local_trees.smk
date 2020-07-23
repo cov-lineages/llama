@@ -92,7 +92,7 @@ rule get_collapsed_representative:
         
 rule extract_taxa:
     input:
-        collapsed_tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.nexus")
+        collapsed_tree = os.path.join(config["tempdir"],"collapsed_trees","{tree}.newick")
     output:
         tree_taxa = os.path.join(config["tempdir"], "collapsed_trees","{tree}_taxon_names.txt")
     shell:
