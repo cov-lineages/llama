@@ -130,17 +130,17 @@ rule jclusterfunk_context:
         tree = config["tree"],
         metadata = rules.combine_metadata.output.combined_csv
     params:
-        outdir = os.path.join(config["tempdir"],"catchment_trees"),
+        outdir = os.path.join(config["outdir"],"catchment_trees"),
         distance = config["distance"]
     output:
-        txt = os.path.join(config["tempdir"],"catchment_trees","catchment_trees_prompt.txt")
+        txt = os.path.join(config["outdir"],"catchment_trees","catchment_trees_prompt.txt")
     shell:
         """
-        ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk context \
+        jclusterfunk context \
         -i {input.tree:q} \
         -o {params.outdir:q} \
         --max-parent {params.distance} \
-        -f nexus \
+        -f newick \
         -p local \
         --ignore-missing \
         -m {input.metadata:q} \
@@ -155,6 +155,7 @@ rule process_local_trees:
         combined_metadata = rules.combine_metadata.output.combined_csv, 
         query_seqs = rules.get_closest_in_db.output.aligned_query, #datafunk-processed seqs
         context_prompt = rules.jclusterfunk_context.output.txt,
+        metadata = config["metadata"],
         seqs = config["seqs"],
         reference_fasta = config["reference_fasta"]
     params:
@@ -162,9 +163,9 @@ rule process_local_trees:
         tempdir= config["tempdir"],
         path = workflow.current_basedir,
         threshold = config["threshold"],
-        
+        data_column = config["data_column"],
         fasta = config["fasta"],
-        tree_dir = os.path.join(config["tempdir"],"catchment_trees"),
+        tree_dir = os.path.join(config["outdir"],"catchment_trees"),
 
         cores = workflow.cores,
         force = config["force"],
@@ -175,7 +176,7 @@ rule process_local_trees:
         local_trees = []
         for r,d,f in os.walk(params.tree_dir):
             for fn in f:
-                if fn.endswith(".nexus"):
+                if fn.endswith(".newick"):
                     file_stem = ".".join(fn.split(".")[:-1])
                     local_trees.append(file_stem)
         local_str = ",".join(local_trees) #to pass to snakemake pipeline
@@ -196,7 +197,9 @@ rule process_local_trees:
                         "tempdir={params.tempdir:q} "
                         "outgroup_fasta={input.reference_fasta} "
                         "aligned_query_seqs={input.query_seqs:q} "
+                        "metadata={input.metadata} "
                         "seqs={input.seqs:q} "
+                        "data_column={params.data_column} "
                         "combined_metadata={input.combined_metadata:q} "
                         "threshold={params.threshold} "
                         "--cores {params.cores}")

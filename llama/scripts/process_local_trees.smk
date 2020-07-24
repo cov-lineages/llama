@@ -6,35 +6,102 @@ import collections
 
 config["tree_stems"] = config["local_str"].split(",")
 
+
 rule all:
     input:
         expand(os.path.join(config["tempdir"], "collapsed_trees","{tree}.newick"), tree = config["tree_stems"]),
         os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
         expand(os.path.join(config["outdir"],"local_trees","{tree}.tree"), tree = config["tree_stems"])
 
-
-rule annotate:
+rule extract_taxa_from_catchment:
     input:
-        tree = os.path.join(config["tempdir"],"catchment_trees","{tree}.nexus"),
-        metadata = config["combined_metadata"]
+        catchment_tree = os.path.join(config["outdir"],"catchment_trees","{tree}.newick")
     output:
-        tree = os.path.join(config["outdir"],"annotated_trees","{tree}.nexus")
-    shell:
-        """
-        ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk annotate \
-        -i {input.tree:q} \
-        -o {output.tree} \
-        -m {input.metadata:q} \
-        -r \
-        --id-column closest \
-        --tip-attributes lineage \
-        -f nexus
-        """
+        tree_taxa = os.path.join(config["tempdir"], "catchment_trees","{tree}_taxon_names.txt")
+    run:
+        print(f"Extracting tax labels from local tree {input.catchment_tree}\n")
+        shell("clusterfunk get_taxa -i {input.catchment_tree} --in-format newick -o {output.tree_taxa} --out-format nexus")
+
+rule get_lineage_represenatives:
+    input:
+        metadata = config["metadata"],
+        seqs = config["seqs"],
+        tree_taxa = rules.extract_taxa_from_catchment.output.tree_taxa
+    params:
+        data_column = config["data_column"]
+    output:
+        representative_metadata = os.path.join(config["tempdir"], "representative_lineage_taxa","{tree}.metadata.csv"),
+    run:
+        taxa = []
+        with open(input.tree_taxa, "r") as f:
+            for l in f:
+                l = l.rstrip("\n")
+                taxa.append(l)
+        print(f"{len(taxa)} number of taxa read in")
+
+        lineages = collections.defaultdict(list)
+        with open(input.metadata,newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row[params.data_column] in taxa:
+                    lineage = row["lineage"]
+                    lineages[lineage].append(row[params.data_column])
+        print(f"{len(lineages)} different lineages in local tree")
+        for lineage in sorted(lineages):
+            print(f"- {lineage}")
+
+        lineage_seqs_with_ambiguities = collections.defaultdict(list)
+        for record in SeqIO.parse(input.seqs,"fasta"):
+            for lineage in lineages:
+                if record.id in lineages[lineage]:
+                    amb_count = 0
+                    for base in record.seq:
+                        if base.upper() not in ["A","T","C","G","-"]:
+                            amb_count +=1
+                    amb_pcent = (100*amb_count) / len(record.seq)
+
+                    lineage_seqs_with_ambiguities[lineage].append((record.id, amb_pcent))
+
+        with open(output.representative_metadata, "w") as fw:
+            for lineage in lineage_seqs_with_ambiguities:
+                records = lineage_seqs_with_ambiguities[lineage]
+                sorted_with_amb = sorted(records, key = lambda x : x[1])
+                
+                top_five_rep = sorted_with_amb[:5]
+
+                for rep in top_five_rep:
+                    fw.write(f"{rep[0]},{lineage}\n")
+
+rule combine_protected_metadata:
+    input:
+        lineage_reps = rules.get_lineage_represenatives.output.representative_metadata,
+        query_metadata = config["combined_metadata"]
+    output:
+        protected = os.path.join(config["tempdir"],"collapsed_trees","{tree}.protected.csv")
+    run:
+        with open(output.protected, "w") as fw:
+            fw.write("taxon,lineage\n")
+
+            taxa = []
+            with open(input.query_metadata,newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    closest = row["closest"]
+                    lineage = row["lineage"]
+                    taxa.append(closest)
+                    fw.write(f"{closest},{lineage}\n")
+
+            with open(input.lineage_reps,"r") as f:
+                for l in f:
+                    l = l.rstrip("\n")
+                    taxon,lineage = l.split(',')
+                    if taxon not in taxa:
+                        fw.write(f"{l}\n")
 
 rule summarise_polytomies:
     input:
-        tree = os.path.join(config["outdir"], "annotated_trees","{tree}.nexus"),
-        metadata = config["combined_metadata"]
+        tree = os.path.join(config["outdir"], "catchment_trees","{tree}.newick"),
+        metadata = rules.combine_protected_metadata.output.protected
     params:
         tree_dir = os.path.join(config["outdir"],"catchment_trees"),
         threshold = config["threshold"]
@@ -46,8 +113,8 @@ rule summarise_polytomies:
         clusterfunk focus -i {input.tree:q} \
         -o {output.collapsed_tree:q} \
         --metadata {input.metadata:q} \
-        --index-column closest \
-        --in-format nexus \
+        --index-column taxon \
+        --in-format newick \
         --out-format newick \
         --threshold {params.threshold} \
         --output-tsv {output.collapsed_information:q}
@@ -125,6 +192,7 @@ rule gather_fasta_seqs:
 
         added_seqs = []
         with open(output.aln, "w") as fw:
+
             for record in SeqIO.parse(input.outgroup_fasta, "fasta"):
                 fw.write(f">{record.description}\n{record.seq}\n")
                 added_seqs.append(record.id)
@@ -142,7 +210,6 @@ rule gather_fasta_seqs:
                 if record.id in taxa:
                     fw.write(f">{record.description}\n{record.seq}\n")
                     added_seqs.append(record.id)
-
 
 rule hash_for_iqtree:
     input:

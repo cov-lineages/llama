@@ -29,27 +29,103 @@ rule all:
         os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
         expand(os.path.join(config["outdir"],"local_trees","{tree}.tree"), tree = config["tree_stems"])
 
-rule annotate:
+# rule annotate:
+#     input:
+#         tree = os.path.join(config["tempdir"],"catchment_trees","{tree}.nexus"),
+#         metadata = config["combined_metadata"]
+#     output:
+#         tree = os.path.join(config["outdir"],"annotated_trees","{tree}.nexus")
+#     shell:
+#         """
+#         ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk annotate \
+#         -i {input.tree:q} \
+#         -o {output.tree} \
+#         -m {input.metadata:q} \
+#         -r \
+#         --id-column closest \
+#         --tip-attributes lineage \
+#         -f nexus
+#         """
+
+rule extract_taxa:
     input:
-        tree = os.path.join(config["tempdir"],"catchment_trees","{tree}.nexus"),
-        metadata = config["combined_metadata"]
+        catchment_tree = os.path.join(config["outdir"],"catchment_trees","{tree}.nexus")
     output:
-        tree = os.path.join(config["outdir"],"annotated_trees","{tree}.nexus")
+        tree_taxa = os.path.join(config["tempdir"], "catchment_trees","{tree}_taxon_names.txt")
     shell:
-        """
-        ~/Documents/jclusterfunk/release/jclusterfunk_v0.0.1/jclusterfunk annotate \
-        -i {input.tree:q} \
-        -o {output.tree} \
-        -m {input.metadata:q} \
-        -r \
-        --id-column closest \
-        --tip-attributes lineage \
-        -f nexus
-        """
+        "clusterfunk get_taxa -i {input.catchment_tree} --in-format nexus -o {output.tree_taxa} --out-format nexus"
+
+rule get_lineage_represenatives:
+    input:
+        metadata = config["metadata"],
+        seqs = config["seqs"],
+        taxa = rules.extract_taxa.output.tree_taxa
+    params:
+        data_column = config["data_column"]
+    output:
+        representative_seq = os.path.join(config["tempdir"], "representative_lineage_taxa","{tree}.fasta"),
+        representative_metadata = os.path.join(config["tempdir"], "representative_lineage_taxa","{tree}.metadata.csv"),
+    run:
+        taxa = []
+        with open(input.tree_taxa, "r") as f:
+            for l in f:
+                l = l.rstrip("\n")
+                taxa.append(l)
+
+        lineages = collections.defaultdict(list)
+        with open(input.metadata,newline="") as f:
+            reader = csv.DictReader(f)
+            if row[params.data_column] in taxa:
+                lineage = row["lineage"]
+                lineages[lineage].append(row[params.data_column])
+
+        lineage_seqs = collections.defaultdict(list)
+        for record in SeqIO.parse(input.seqs,"fasta"):
+            for lineage in lineages:
+                if record.id in lineages[lineage]:
+                    lineage_seqs[lineage].append(record)
+
+        with open(output.representative_metadata, "w") as fcsv:
+            with open(output.representative_seq, "w") as fw:
+                for lineage in lineage_seqs:
+                    records = lineage_seqs[lineage]
+                    sorted_with_amb = []
+                    for record in records:
+                        amb_count = 0
+                        for base in record.seq:
+                            if base.upper() not in ["A","T","C","G","-"]:
+                                amb_count +=1
+                        amb_pcent = (100*amb_count) / len(record.seq)
+                        sorted_with_amb.append((record.id, amb_pcent, record.seq))
+                    sorted_with_amb = sorted(sorted_with_amb, key = lambda x : x[1])
+                    top_five_rep = sorted_with_amb[:5]
+                    for rep in top_five_rep:
+                        fw.write(f">{rep[0]} lineage={lineage} ambiguity={rep[1]}\n{rep[2]}\n")
+                        fcsv.write(f"{rep[0]},{lineage}\n")
+
+rule combine_protected_metadata:
+    input:
+        lineage_reps = rules.get_lineage_represenatives.output.representative_metadata,
+        query_metadata = config["combined_metadata"]
+    output:
+        protected = os.path.join(config["tempdir"],"collapsed_trees","{tree}.protected.csv")
+    run:
+        with open(output.protected, "w") as fw:
+            fw.write("taxon,lineage\n")
+            with open(input.query_metadata,newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    closest = row["closest"]
+                    lineage = row["lineage"]
+                    fw.write(f"{closest},{lineage}\n")
+            with open(input.lineage_reps,"r") as f:
+                for l in f:
+                    l = l.rstrip("\n")
+                    fw.write(f"{l}\n")
 
 rule summarise_polytomies:
     input:
-        tree = os.path.join(config["outdir"], "annotated_trees","{tree}.nexus"),
+        tree = os.path.join(config["outdir"], "catchment_trees","{tree}.nexus"),
         metadata = config["combined_metadata"]
     params:
         tree_dir = os.path.join(config["outdir"],"catchment_trees")
