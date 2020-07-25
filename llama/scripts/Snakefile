@@ -14,6 +14,8 @@ if config["quiet_mode"]=="True":
 else:
     config["quiet_mode"] = ""
 
+
+
 config["distance"]=int(config["distance"])
 
 if config["qc_fail"] != "":
@@ -21,10 +23,17 @@ if config["qc_fail"] != "":
     config["qc_fail"] = f"--failed-seqs {fail_file}"
 
 ##### Target rules #####
-rule all:
-    input:
-        os.path.join(config["outdir"],"combined_metadata.csv"),
-        os.path.join(config["outdir"],"local_trees","collapse_report.txt")
+if config["report"] =="True":
+    rule all:
+        input:
+            os.path.join(config["outdir"],"combined_metadata.csv"),
+            os.path.join(config["outdir"],"local_trees","collapse_report.txt")
+else:
+    rule all:
+        input:
+            os.path.join(config["outdir"],"combined_metadata.csv"),
+            os.path.join(config["outdir"],"local_trees","collapse_report.txt")
+
 
 
 ##### Modules #####

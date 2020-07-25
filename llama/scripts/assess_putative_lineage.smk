@@ -224,3 +224,33 @@ rule process_local_trees:
                             "combined_metadata={input.combined_metadata:q} "
                             "threshold={params.threshold} "
                             "--cores {params.cores}")
+
+rule make_report:
+    input:
+        lineage_trees = rules.process_catchments.output.tree_summary,
+        query = config["query"],
+        combined_metadata = os.path.join(config["outdir"],"combined_metadata.csv"),
+        metadata = config["metadata"],
+        report_template = config["report_template"],
+        no_seq = rules.get_closest_cog.output.not_processed
+    params:
+        treedir = os.path.join(config["outdir"],"local_trees"),
+        outdir = config["rel_outdir"],
+        fields = config["fields"],
+        rel_figdir = os.path.join(".","figures"),
+        figdir = os.path.join(config["outdir"],"figures"),
+        failure = config["qc_fail"]
+    output:
+        outfile = os.path.join(config["outdir"], "llama_report.md")
+    shell:
+        "make_report.py "
+        "--input-csv {input.query:q} "
+        "--figdir {params.rel_figdir:q} "
+        "{params.failure} "
+        "--no-seq-provided {input.no_seq} "
+        "--treedir {params.treedir:q} "
+        "--report-template {input.report_template:q} "
+        "--filtered-metadata {input.combined_metadata:q} "
+        "--metadata {input.metadata:q} "
+        "--outfile {output.outfile:q} "
+        "--outdir {params.outdir:q}"

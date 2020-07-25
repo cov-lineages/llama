@@ -45,6 +45,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
     parser.add_argument('--collapse-threshold', action='store',type=int,help="Minimum number of nodes to collapse on. Default: 1", dest="threshold", default=1)
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
+    parser.add_argument("-r","--report",action="store_true",help="Generate markdown report of input queries and their local trees")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed to attempt analysis. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed to attempt analysis. Default: 10000",dest="minlen")
@@ -266,6 +267,10 @@ def main(sysargs = sys.argv[1:]):
     else:
         config["distance"] = "1"
 
+    if args.report:
+        config["report"] = "True"
+    else:
+        config["report"] = "False"
     
     if args.threshold:
         try:
