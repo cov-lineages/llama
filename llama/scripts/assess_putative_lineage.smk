@@ -227,16 +227,15 @@ rule process_local_trees:
 
 rule make_report:
     input:
-        lineage_trees = rules.process_catchments.output.tree_summary,
+        lineage_trees = rules.process_local_trees.output.tree_summary,
         query = config["query"],
         combined_metadata = os.path.join(config["outdir"],"combined_metadata.csv"),
         metadata = config["metadata"],
-        report_template = config["report_template"],
-        no_seq = rules.get_closest_cog.output.not_processed
+        # report_template = config["report_template"],
+        no_seq = rules.get_closest_in_db.output.not_processed
     params:
         treedir = os.path.join(config["outdir"],"local_trees"),
         outdir = config["rel_outdir"],
-        fields = config["fields"],
         rel_figdir = os.path.join(".","figures"),
         figdir = os.path.join(config["outdir"],"figures"),
         failure = config["qc_fail"]
@@ -249,7 +248,7 @@ rule make_report:
         "{params.failure} "
         "--no-seq-provided {input.no_seq} "
         "--treedir {params.treedir:q} "
-        "--report-template {input.report_template:q} "
+        # "--report-template {input.report_template:q} "
         "--filtered-metadata {input.combined_metadata:q} "
         "--metadata {input.metadata:q} "
         "--outfile {output.outfile:q} "
