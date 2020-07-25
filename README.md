@@ -2,8 +2,6 @@
 
 **L**ocal **L**ineage and **M**onophyly **A**ssessment
 
-(COMING SOON)
-
 <img src="./docs/llama_logo.svg" width="450">
 
 ## Quick links
@@ -15,8 +13,6 @@
   * [Usage](#usage)
   * [Analysis pipeline](#analysis-pipeline)
   * [Output](#output)
-  * [Source data](#source-data)
-  * [Authors](#authors)
   * [Acknowledgements](#acknowledgements)
   * [References](#references)
   * [Software versions](#software-versions)
@@ -24,7 +20,7 @@
 
 ### Requirements
 
-llama runs on MacOS and Linux. The conda environment recipe may not build on Windows and is not supported but can be run using the Windows subsystem for Linux.
+<strong>llama</strong> runs on MacOS and Linux. The conda environment recipe may not build on Windows and is not supported but can be run using the Windows subsystem for Linux.
 
 1. Some version of conda, we use Miniconda3. Can be downloaded from [here](https://docs.conda.io/en/latest/miniconda.html)
 2. Your input query file with a row for each sequence name you want to analyse/ create local trees for. These can be present in the big tree already or in the fasta file you supply
@@ -32,7 +28,8 @@ llama runs on MacOS and Linux. The conda environment recipe may not build on Win
 4. A directory of data containing the following files:
     - <strong>global.tree</strong>: a large tree that you want to place your sequences in
     - <strong>alignment.fasta</strong>: an alignment file with the fasta sequences used to make the tree
-    - <strong>metadata.csv</strong>: associated metadata with minimally the name of your sequences and a lineage designation
+    - <strong>metadata.csv</strong>: associated metadata with minimally the name of the sequences in the tree/ alignment and a lineage designation
+    The names of the tips of the tree, the sequence ids in the alignment and the column you select as `--data-column` in the metadata must match
 
 
 ### Install llama
@@ -50,9 +47,9 @@ llama runs on MacOS and Linux. The conda environment recipe may not build on Win
 Type (in the llama environment):
 
 ```
-llama -v
+llama
 ```
-and you should see the version of llama printed.
+and you should see the help menu of llama printed.
 
 ### Updating llama
 
@@ -82,7 +79,7 @@ llama: Local Lineage And Monophyly Assessment
 
 positional arguments:
   query                 Input csv file with minimally `name` as a column
-                        header. Alternatively, `--index-column` can specifiy a
+                        header. Alternatively, `--input-column` can specifiy a
                         column name other than `name`
 
 optional arguments:
@@ -90,21 +87,25 @@ optional arguments:
   -i, --id-string       Indicates the input is a comma-separated id string
                         with one or more query ids. Example:
                         `EDB3588,EDB3589`.
-  --fasta FASTA         Optional fasta query. Fasta sequence names must 
+  --fasta FASTA         Optional fasta query. Fasta sequence names must
                         exactly match those in your input query.
-  -o OUTDIR,
+  -o OUTDIR, 
   --outdir OUTDIR
                         Output directory. Default: current working directory
-  --datadir DATADIR     Local directory that contains the data files
-    --outgroup OUTGROUP Optional outgroup sequence to root local subtrees.
+  --outgroup OUTGROUP   Optional outgroup sequence to root local subtrees.
                         Default an anonymised sequence that is at the base of
                         the global SARS-CoV-2 phylogeny.
-  --index-column INDEX_COLUMN
-                        Input csv column to match in database. Default: name
-  --search-field SEARCH_FIELD
-                        Column in database to match with input csv. Default:
-                        covv_accession_id
+  -d DATADIR, 
+  --datadir DATADIR
+                        Local directory that contains the data files
+  --input-column INPUT_COLUMN
+                        Column in input csv file to match with database.
+                        Default: name
+  --data-column DATA_COLUMN
+                        Column in database to match with input csv file.
+                        Default: sequence_name
   --distance DISTANCE   Extraction from large tree radius. Default: 2
+  -n, --dry-run         Go through the motions but don't actually run
   --tempdir TEMPDIR     Specify where you want the temp stuff to go. Default:
                         $TMPDIR
   --no-temp             Output all intermediate files, for dev purposes.
@@ -118,7 +119,6 @@ optional arguments:
   --min-length MINLEN   Minimum query length allowed to attempt analysis.
                         Default: 10000
   -v, --version         show program's version number and exit
-
 ```
 
 ### Analysis pipeline
@@ -127,31 +127,32 @@ optional arguments:
 Overview:
 
 
-- From the input csv (`<query>`), `llama` attempts to match the ids with ids in the metadata.csv.
+- From the input csv (`<query>`), <strong>llama</strong> attempts to match the ids with ids in the metadata.csv.
 
 - If the id matches with a record, the corresponding metadata is pulled out.
 
-- If the id doesn't match with a record and a fasta sequence of that id has been provided, it's passed into a workflow to identify the closest sequence. In brief, this search consists of quality control steps that maps the sequence against a reference (`MN908947.3`), pads any indels relative to the reference and masks non-coding regions. llama then runs a `minimap2` search against the alignment.fasta file and finds the best hit to the query sequence.
+- If the id doesn't match with a record and a fasta sequence with that query id has been provided, it's passed into a workflow (`find_closest_in_db.smk`) to identify the closest sequence. In brief, this search consists of quality control steps that maps the sequence against a reference (an early, anonymised sequence from lineage A at the root of the global tree), pads any indels relative to the reference and masks non-coding regions. llama then runs a `minimap2` search against the alignment.fasta file and finds the best hit to the query sequence.
 
-- The metadata for the closest sequences are also pulled out of the large metadata.csv.
+- The metadata for the closest sequences are then also pulled out of the large metadata.csv.
 
-- Combining the metadata from the records of the closest hit and the exact matching records found in the csv, `llama` queries the large global.tree phylogeny. The local trees around the relevant tips are pruned out of the large phylogeny, merging overlapping local phylogenys as needed.
+- Combining the metadata from the records of the closest hit and the exact matching records found in the csv, <strong>llama</strong> queries the large global.tree phylogeny. The local trees around the relevant tips are pruned out of the large phylogeny, merging overlapping local phylogenys as needed. By default, <strong>llama</strong> pulls out a local tree two above the query id tips, but this can be customised with the `--distance` argument if larger or smaller trees are desired. 
 
-- If these local trees contain "closest-matching" tips, the sequence records for the tips on the tree and the sequences of the relevant queries are added into an alignment. Any peripheral sequences coming off of a polytomy are collapsed to a single node and summaries of the tip's contents are output. An outgroup sequence (Default: Wuhan 4) is added into the alignment by default.
+- If these local trees contain "closest-matching" tips that have been found based on the input fasta file, the sequence records for the tips on the tree and the sequences of the relevant queries are added into an alignment. <strong>llama</strong> then checks what lineages are present in the local tree and flags a maximum of 10 sequences per lineage to retain the surrounding context of the tree. Any peripheral sequences coming off of a polytomy that are not flagged and are not the query sequences are collapsed to a single node and summaries of the tip's contents are output. An outgroup sequence from the base of the tree at lineage A is added into the alignment.
 
-- After collapsing the nodes, llama runs `iqtree` on the new alignment, now with query sequences in, and then prunes off the outgroup sequence.
+- After collapsing the nodes, <strong>llama</strong> runs `iqtree` on the new alignment, with the outgroup and query sequences in, and then prunes off the outgroup sequence.
 
-- `llama` then annotates this new phylogeny with lineage assignments.
+- <strong>llama</strong> then annotates this new phylogeny with lineage assignments and can produce a report (COMING SOON!).
 
 ### Output
 
-Collapsed local trees with your query sequences added in (if optional fasta file supplied).
+- Catchment trees around the query sequences (uncollapsed)
+- Collapsed local trees (containing query sequences if optional fasta file supplied) with a representative set of sequences from surrounding lineages and query tips uncollapsed
 
 ### Acknowledgements
 
-`llama` makes use of [`datafunk`](https://github.com/cov-ert/datafunk) and [`clusterfunk`](https://github.com/cov-ert/clusterfunk) functions which have been written by members of the Rambaut Lab, specificially Rachel Colquhoun, JT McCrone, Ben Jackson and Shawn Yu.
+<strong>llama</strong> makes use of [`datafunk`](https://github.com/cov-ert/datafunk) and [`clusterfunk`](https://github.com/cov-ert/clusterfunk) functions which have been written by members of the Rambaut Lab, specificially Rachel Colquhoun, JT McCrone, Ben Jackson and Shawn Yu.
 
-`llama` runs a java implementation [`jclusterfunk`](https://github.com/cov-ert/clusterfunk) written by Andrew Rambaut.
+<strong>llama</strong> runs a java implementation [`jclusterfunk`](https://github.com/cov-ert/clusterfunk) written by Andrew Rambaut.
 
 [`baltic`](https://github.com/evogytis/baltic/tree/master/baltic) by Gytis Dudas is used to visualize the trees.
 
