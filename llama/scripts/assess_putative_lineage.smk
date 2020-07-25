@@ -8,6 +8,7 @@ rule check_metadata:
         query = config["query"],
         seqs = config["seqs"],
         metadata = config["metadata"]
+    message: "Checking metadata for queries"
     params:
         input_column = config["input_column"],
         data_column = config["data_column"]
@@ -98,7 +99,7 @@ rule get_closest_in_db:
 
         else:
             shell("touch {output.closest_in_db:q} && touch {output.aligned_query} ")
-        print(f"Number of query ids not processed as no valid sequence supplied: {len(query_with_no_seq)}\n")
+        print(f"Number of query ids not processed: {len(query_with_no_seq)}\n Please provide a valid fasta sequence if you'd like these to be included.")
         with open(output.not_processed, "w") as fw:
             for query in list(set(query_with_no_seq)):
                 fw.write(f"{query},fail=no_sequence\n")
@@ -109,6 +110,7 @@ rule combine_metadata:
         in_db = rules.check_metadata.output.in_db
     params:
         data_column = config["data_column"]
+    message: "Combining metadata from those already in db and the closest ones in db"
     output:
         combined_csv = os.path.join(config["outdir"],"combined_metadata.csv")
     run:
@@ -129,6 +131,7 @@ rule jclusterfunk_context:
     input:
         tree = config["tree"],
         metadata = rules.combine_metadata.output.combined_csv
+    message: "Finding the local context of query sequences in the global tree"
     params:
         outdir = os.path.join(config["outdir"],"catchment_trees"),
         distance = config["distance"]
@@ -197,7 +200,7 @@ rule process_local_trees:
                         "tempdir={params.tempdir:q} "
                         "outgroup_fasta={input.reference_fasta} "
                         "aligned_query_seqs={input.query_seqs:q} "
-                        "metadata={input.metadata} "
+                        "metadata={input.metadata:q} "
                         "seqs={input.seqs:q} "
                         "data_column={params.data_column} "
                         "combined_metadata={input.combined_metadata:q} "
@@ -213,5 +216,11 @@ rule process_local_trees:
                             f"local_str={local_str} "
                             "outdir={params.outdir:q} "
                             "tempdir={params.tempdir:q} "
+                            "outgroup_fasta={input.reference_fasta} "
+                            "aligned_query_seqs={input.query_seqs:q} "
+                            "metadata={input.metadata:q} "
+                            "seqs={input.seqs:q} "
+                            "data_column={params.data_column} "
                             "combined_metadata={input.combined_metadata:q} "
+                            "threshold={params.threshold} "
                             "--cores {params.cores}")

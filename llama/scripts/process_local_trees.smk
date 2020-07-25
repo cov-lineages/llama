@@ -37,7 +37,7 @@ rule get_lineage_represenatives:
             for l in f:
                 l = l.rstrip("\n")
                 taxa.append(l)
-        print(f"{len(taxa)} number of taxa read in")
+        print(f"{len(taxa)} taxa read in")
 
         lineages = collections.defaultdict(list)
         with open(input.metadata,newline="") as f:
@@ -67,10 +67,13 @@ rule get_lineage_represenatives:
                 records = lineage_seqs_with_ambiguities[lineage]
                 sorted_with_amb = sorted(records, key = lambda x : x[1])
                 
-                top_five_rep = sorted_with_amb[:5]
-
-                for rep in top_five_rep:
-                    fw.write(f"{rep[0]},{lineage}\n")
+                if len(sorted_with_amb) > 10:
+                    top_ten_rep = sorted_with_amb[:10]
+                    for rep in top_ten_rep:
+                        fw.write(f"{rep[0]},{lineage}\n")
+                else:
+                    for rep in sorted_with_amb:
+                        fw.write(f"{rep[0]},{lineage}\n")
 
 rule combine_protected_metadata:
     input:
@@ -257,7 +260,7 @@ rule iqtree_catchment:
     output:
         tree = os.path.join(config["tempdir"], "renamed_trees","{tree}.query.aln.fasta.treefile")
     shell:
-        "iqtree -s {input.aln:q} -au -m HKY -nt 1 -redo -o outgroup"
+        "iqtree -s {input.aln:q} -au -m HKY -nt 1 -redo -o outgroup -quiet"
 
 
 rule restore_tip_names:
