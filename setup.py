@@ -17,6 +17,7 @@ setup(name='llama',
       "llama/scripts/just_collapse_trees.smk",
       "llama/scripts/make_report.py",
       "llama/scripts/make_tree_figures.py",
+      "llama/scripts/data_parsing.py",
       "llama/scripts/report_template.pmd"],
       package_data={"llama":["data/reference.fasta"]},
       install_requires=[
