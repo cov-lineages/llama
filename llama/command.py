@@ -34,6 +34,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('query',help="Input csv file with minimally `name` as a column header. Alternatively, `--input-column` can specifiy a column name other than `name`")
     parser.add_argument('-i',"--id-string", action="store_true",help="Indicates the input is a comma-separated id string with one or more query ids. Example: `EDB3588,EDB3589`.", dest="ids")
     parser.add_argument('--fasta', action="store",help="Optional fasta query. Fasta sequence names must exactly match those in your input query.", dest="fasta")
+    parser.add_argument('-ns','--no-seqs', action="store_true",help="Alignment not available. Note, to work, all queries must already be in global tree.", dest="no_seqs")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument("--outgroup",action="store",help="Optional outgroup sequence to root local subtrees. Default an anonymised sequence that is at the base of the global SARS-CoV-2 phylogeny.")
     parser.add_argument('-d','--datadir', action="store",help="Local directory that contains the data files")
@@ -59,13 +60,20 @@ def main(sysargs = sys.argv[1:]):
         args = parser.parse_args(sysargs)
 
     # find the master Snakefile
-    snakefile = os.path.join(thisdir, 'scripts','Snakefile')
+
+    if args.no_seqs:
+        snakefile = os.path.join(thisdir, 'scripts', 'no_seqs_snakefile.smk')
+    else:
+        snakefile = os.path.join(thisdir, 'scripts','Snakefile')
     if not os.path.exists(snakefile):
         sys.stderr.write('Error: cannot find Snakefile at {}\n Check installation'.format(snakefile))
         sys.exit(-1)
     
     # find the query fasta
     if args.fasta:
+        if args.no_seqs:
+            sys.stderr.write(f"Error: can't supply a fasta file if no supporting alignment\nEither provide a data directory with an alignment or just query sequences in the tree\n")
+            sys.exit(-1)
         fasta = os.path.join(cwd, args.fasta)
         if not os.path.exists(fasta):
             sys.stderr.write('Error: cannot find fasta query at {}\n'.format(fasta))
@@ -174,22 +182,35 @@ def main(sysargs = sys.argv[1:]):
         metadata = os.path.join(data_dir,"metadata.csv")
 
         tree = os.path.join(data_dir,"global.tree")
+        if args.no_seqs:
+            if not os.path.isfile(metadata) or not os.path.isfile(tree):
+                sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
+        - global.tree\n\
+        - metadata.csv\n""")
+                sys.exit(-1)
+            else:
+                config["metadata"] = metadata
+                config["tree"] = tree
 
-        if not os.path.isfile(seqs) or not os.path.isfile(metadata) or not os.path.isfile(tree):
-            sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
-    - alignment.fasta\n\
-    - global.tree\n\
-    - metadata.csv\n""")
-            sys.exit(-1)
+                print("Found data:")
+                print("    -",metadata)
+                print("    -",tree,"\n")
         else:
-            config["seqs"] = seqs
-            config["metadata"] = metadata
-            config["tree"] = tree
+            if not os.path.isfile(seqs) or not os.path.isfile(metadata) or not os.path.isfile(tree):
+                sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
+        - alignment.fasta\n\
+        - global.tree\n\
+        - metadata.csv\n""")
+                sys.exit(-1)
+            else:
+                config["seqs"] = seqs
+                config["metadata"] = metadata
+                config["tree"] = tree
 
-            print("Found data:")
-            print("    -",seqs)
-            print("    -",metadata)
-            print("    -",tree,"\n")
+                print("Found data:")
+                print("    -",seqs)
+                print("    -",metadata)
+                print("    -",tree,"\n")
     else:
         print("No data directory specified, please specify where to find the data files\n")
         sys.exit(-1)
@@ -207,8 +228,10 @@ def main(sysargs = sys.argv[1:]):
     2) check fasta file N content
     3) write a file that contains just the seqs to run
     """
+
     # run qc on the input sequence file
     if args.fasta:
+
         do_not_run = []
         run = []
         for record in SeqIO.parse(args.fasta, "fasta"):

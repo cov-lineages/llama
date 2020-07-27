@@ -136,7 +136,7 @@ rule jclusterfunk_context:
         outdir = os.path.join(config["outdir"],"catchment_trees"),
         distance = config["distance"]
     output:
-        txt = os.path.join(config["outdir"],"catchment_trees","catchment_trees_prompt.txt")
+        txt = os.path.join(config["tempdir"],"catchment_trees","catchment_trees_prompt.txt")
     shell:
         """
         jclusterfunk context \
