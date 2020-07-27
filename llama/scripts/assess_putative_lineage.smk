@@ -238,9 +238,13 @@ rule make_report:
         outdir = config["rel_outdir"],
         rel_figdir = os.path.join(".","figures"),
         figdir = os.path.join(config["outdir"],"figures"),
-        failure = config["qc_fail"]
+        failure = config["qc_fail"],
+        input_column = config["input-column"]
+        data_column = config["data_column"]
     output:
-        outfile = os.path.join(config["outdir"], "llama_report.md")
+        outfile = os.path.join(config["outdir"], "llama_report.pmd") #change this back to md after debugging
+    # shell:
+    #     "cp {input.footer:q} {output.footer_fig:q}"
     shell:
         "make_report.py "
         "--input-csv {input.query:q} "
@@ -253,3 +257,5 @@ rule make_report:
         "--metadata {input.metadata:q} "
         "--outfile {output.outfile:q} "
         "--outdir {params.outdir:q}"
+        "--input-column {params.input_column:q}"
+        "--data-column {params.data_column:q}"
