@@ -260,6 +260,6 @@ rule make_report:
             "--filtered-metadata {input.combined_metadata:q} "
             "--metadata {input.metadata:q} "
             "--outfile {output.outfile:q} "
-            "--outdir {params.outdir:q}"
-            "--input-column {params.input_column:q}"
+            "--outdir {params.outdir:q} "
+            "--input-column {params.input_column:q} "
             "--data-column {params.data_column:q}")

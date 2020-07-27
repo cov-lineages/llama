@@ -27,13 +27,9 @@ class taxon(): #might want country in here, not sure yet
         self.tree = "NA"
 
 
-    
-
 def parse_filtered_metadata(metadata_file, tip_to_tree):
     
     query_dict = {}
-    query_id_dict = {}
-    present_lins = set()
 
     tree_to_tip = defaultdict(list)
 
@@ -43,15 +39,12 @@ def parse_filtered_metadata(metadata_file, tip_to_tree):
         for sequence in in_data:
             glob_lin = sequence['lineage']
 
-            query_id = sequence['query_id']
             query_name = sequence['query']
             closest_name = sequence["closest"]
 
             sample_date = sequence["sample_date"]
 
             new_taxon = taxon(query_name, glob_lin)
-
-            new_taxon.query_id = query_id
 
             if query_name == closest_name: #if it's in the database, get its sample date
                 new_taxon.in_db = True
@@ -60,8 +53,6 @@ def parse_filtered_metadata(metadata_file, tip_to_tree):
 
             else:
                 new_taxon.closest = closest_name
-
-            present_lins.append(glob_lin)
             
             relevant_tree = tip_to_tree[query_name]
             new_taxon.tree = relevant_tree
@@ -69,11 +60,10 @@ def parse_filtered_metadata(metadata_file, tip_to_tree):
             tree_to_tip[relevant_tree].append(new_taxon)
            
             query_dict[query_name] = new_taxon
-            query_id_dict[query_id] = new_taxon
             
-    return query_dict, query_id_dict, present_lins, tree_to_tip
+    return query_dict, tree_to_tip
 
-def parse_input_csv(input_csv, query_id_dict, name_column):
+def parse_input_csv(input_csv, query_dict, name_column):
 
     new_query_dict = {}
 
@@ -89,8 +79,8 @@ def parse_input_csv(input_csv, query_id_dict, name_column):
             
             name = sequence[name_column] 
 
-            if name in query_id_dict.keys():
-                taxon = query_id_dict[name]
+            if name in query_dict.keys():
+                taxon = query_dict[name]
 
                 if "sample_date" in col_names: #if it's not in database but date is provided (if it's in the database, it will already have been assigned a sample date.)
                     if sequence["sample_date"] != "":
@@ -112,7 +102,7 @@ def parse_tree_tips(tree_dir):
     tip_to_tree = {}
 
     for fn in os.listdir(tree_dir):
-        if fn.endswith("tree"):
+        if fn.endswith(".tree"):
             tree_name = fn.split(".")[0]
             tree = bt.loadNewick(tree_dir + "/" + fn, absoluteTime=False)
             for k in tree.Objects:
@@ -151,6 +141,7 @@ def parse_full_metadata(query_dict, full_metadata, present_in_tree, database_nam
                     date = "NA"
                 
                 new_taxon.sample_date = date
+                new_taxon.country = country
 
                 full_tax_dict[seq_name] = new_taxon
                                     
@@ -163,14 +154,8 @@ def make_initial_table(query_dict):
 
     for query in query_dict.values():
         
-        df_dict["Query ID"].append(query.query_id.replace("|","\|"))
+        df_dict["Query ID"].append(query.name.replace("|","\|")) #possibly take this out, might not be relevant here
         
-        if query.in_db: 
-            df_dict["Sequence name in Tree"].append(query.name)
-        else:
-            df_dict["Sequence name in Tree"].append("NA")
-        
-
         df_dict["Sample date"].append(query.sample_date)
 
         df_dict["Closest sequence in Tree"].append(query.closest)

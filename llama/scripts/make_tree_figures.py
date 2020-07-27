@@ -40,27 +40,16 @@ def find_tallest_tree(input_dir):
     for r,d,f in os.walk(input_dir):
         for fn in f:
             if fn.endswith(".tree"):
-                num_taxa = 0
-                intro_name = ""
-                with open(r + '/' + fn,"r") as f:
-                    for l in f:
-                        l = l.rstrip("\n")
-
-                        if l.startswith(" Dimensions NTax="):
-
-                            num_taxa = int(l.rstrip(";").split("=")[1])
-                            intro_name = fn.rstrip(".tree")
+               
+                tree_file = os.path.join(r, fn)
+                tree = bt.loadNewick(tree_file,absoluteTime=False)
+                tips = []
                 
-                if num_taxa > 1:
-                    tree_file = os.path.join(r, fn)
-                    tree = bt.loadNewick(tree_file,absoluteTime=False)
-                    tips = []
-                    
-                    for k in tree.Objects:
-                        if k.branchType == 'leaf':
-                            tips.append(k.name)
-                  
-                    tree_heights.append(tree.treeHeight)
+                for k in tree.Objects:
+                    if k.branchType == 'leaf':
+                        tips.append(k.name)
+                
+                tree_heights.append(tree.treeHeight)
     
     max_height = sorted(tree_heights, reverse=True)[0]
     return max_height
@@ -86,7 +75,7 @@ def display_name(tree, tree_name, tree_dir, full_taxon_dict):
                     k.traits["display"] = name + "|" + "not in dict"
 
 
-def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, tallest_height,lineage, taxon_dict, query_id_dict, query_dict):
+def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, tallest_height,lineage, taxon_dict, query_dict):
 
     display_name(My_Tree, tree_name, tree_dir, taxon_dict) 
     My_Tree.uncollapseSubtree()
@@ -106,19 +95,19 @@ def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, tall
     tipsize = 40
     c_func=lambda k: 'dimgrey' ## colour of branches
     l_func=lambda k: 'lightgrey' ## colour of branches
-    s_func = lambda k: tipsize*5 if k.name in query_id_dict.keys() or k.name in query_dict.keys() else tipsize
+    s_func = lambda k: tipsize*5 if k.name in k.name in query_dict.keys() else tipsize
     z_func=lambda k: 100
     b_func=lambda k: 2.0 #branch width
-    so_func=lambda k: tipsize*5 if k.name in query_id_dict.keys() or k.name in query_dict.keys() else 0
+    so_func=lambda k: tipsize*5 if k.name in k.name in query_dict.keys() else 0
     zo_func=lambda k: 99
     zb_func=lambda k: 98
     zt_func=lambda k: 97
-    font_size_func = lambda k: 25 if k.name in query_id_dict.keys() or k.name in query_dict.keys() else 15
+    font_size_func = lambda k: 25 if k.name in k.name in query_dict.keys() else 15
     kwargs={'ha':'left','va':'center','size':12}
 
-    cn_func = lambda k: "goldenrod" if k.name in query_id_dict.keys() or k.name in query_dict.keys() else 'dimgrey'
-    co_func=lambda k: "goldenrod" if k.name in query_id_dict.keys() or k.name in query_dict.keys() else 'dimgrey' 
-    outline_colour_func = lambda k:"goldenrod" if k.name in query_id_dict.keys() or k.name in query_dict.keys() else 'dimgrey' 
+    cn_func = lambda k: "goldenrod" if k.name in k.name in query_dict.keys() else 'dimgrey'
+    co_func=lambda k: "goldenrod" if k.name in k.name in query_dict.keys() else 'dimgrey' 
+    outline_colour_func = lambda k:"goldenrod" if k.name in k.name in query_dict.keys() else 'dimgrey' 
 
     x_attr=lambda k: k.height + offset
     y_attr=lambda k: k.y
@@ -183,7 +172,7 @@ def sort_trees_index(tree_dir):
         
     return c
 
-def make_all_of_the_trees(input_dir, taxon_dict, query_id_dict, query_dict, min_uk_taxa=3):
+def make_all_of_the_trees(input_dir, taxon_dict, query_dict, min_uk_taxa=3):
 
     tallest_height = find_tallest_tree(input_dir)
 
@@ -197,46 +186,41 @@ def make_all_of_the_trees(input_dir, taxon_dict, query_id_dict, query_dict, min_
 
     for tree_number in lst:
         treename = "tree_" + str(tree_number)
-        treefile = "tree_" + str(tree_number) + ".tree"
+        treefile = "local_" + str(tree_number) + ".tree"
+        nodefile = "local_" + str(tree_number)
         num_taxa = 0
-        with open(input_dir + "/" + treefile,"r") as f:
-            for l in f:
-                l = l.rstrip("\n")
-                if l.startswith(" Dimensions NTax="):
-                    num_taxa = int(l.rstrip(";").split("=")[1])
 
-        if num_taxa > 1: 
-            tree = bt.loadNewick(input_dir + "/" + treefile, absoluteTime=False)
+        tree = bt.loadNewick(input_dir + "/" + treefile, absoluteTime=False)
 
-            old_node = tree.root
-            new_node = bt.node()
-            new_node.children.append(old_node)
-            old_node.parent = new_node
-            old_node.length=2.0
-            new_node.height = 0
-            new_node.y = old_node.y
-            tree.root = new_node
+        old_node = tree.root
+        new_node = bt.node()
+        new_node.children.append(old_node)
+        old_node.parent = new_node
+        old_node.length=2.0
+        new_node.height = 0
+        new_node.y = old_node.y
+        tree.root = new_node
 
-            tree.Objects.append(new_node)
+        tree.Objects.append(new_node)
 
-            tips = []
-            
-            for k in tree.Objects:
-                if k.branchType == 'leaf':
-                    tips.append(k.name)
-            
-            if len(tips) < 1000:
+        tips = []
+        
+        for k in tree.Objects:
+            if k.branchType == 'leaf':
+                tips.append(k.name)
+        
+        if len(tips) < 1000:
 
-                df_dict = summarise_node_table(input_dir, treename, taxon_dict)
+            df_dict = summarise_node_table(input_dir, nodefile, taxon_dict)
 
-                overall_df_dict[treename] = df_dict
+            overall_df_dict[treename] = df_dict
 
-                overall_tree_count += 1     
-            
-                make_scaled_tree_without_legend(tree, treename, input_dir, len(tips), tallest_height, tree_number, taxon_dict, query_id_dict, query_dict)     
-            else:
-                too_tall_trees.append(tree_number)
-                continue
+            overall_tree_count += 1     
+        
+            make_scaled_tree_without_legend(tree, nodefile, input_dir, len(tips), tallest_height, tree_number, taxon_dict, query_dict)     
+        else:
+            too_tall_trees.append(tree_number)
+            continue
 
     return too_tall_trees, overall_tree_count, overall_df_dict
 
@@ -261,7 +245,7 @@ def summarise_collapsed_node_for_label(tree_dir, focal_node, focal_tree, full_ta
                     if tax in full_tax_dict.keys():
                         taxon_obj = full_tax_dict[tax]
                         
-                        countries.append(taxon_obj.attribute_dict["country"])
+                        countries.append(taxon_obj.country)
                     
                     else: #should always be in the full metadata now
                         print("tax missing from full metadata")
@@ -311,8 +295,6 @@ def summarise_node_table(tree_dir, focal_tree, full_tax_dict):
         
             dates = []
             countries = []
-            adm2_present = []
-            uk_present = False
 
             node_number = node_name.lstrip("inserted_node")
             
@@ -327,7 +309,7 @@ def summarise_node_table(tree_dir, focal_tree, full_tax_dict):
                         date = dt.datetime.strptime(date_string, "%Y-%m-%d").date()
                         dates.append(date)
                     
-                    countries.append(taxon_obj.attribute_dict["country"])
+                    countries.append(taxon_obj.country)
 
 
             country_counts = Counter(countries)
@@ -371,7 +353,7 @@ def describe_tree_background(full_tax_dict, tree_dir, node_table):
     figure_count = 0
 
     for fn in tree_lst:
-        focal_tree = "tree_" + str(fn)
+        focal_tree = "local_" + str(fn)
         focal_tree_file = tree_dir + "/" + focal_tree + ".txt"
         pretty_focal = "Tree " + str(fn)
 
@@ -394,7 +376,7 @@ def describe_tree_background(full_tax_dict, tree_dir, node_table):
                 countries = []
                 for i in seqs:
                     obj = full_tax_dict[i]
-                    countries.append(obj.attribute_dict["country"])
+                    countries.append(obj.country)
 
                     country_counts = Counter(countries)
                                 

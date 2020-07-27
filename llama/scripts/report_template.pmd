@@ -58,10 +58,10 @@ mpl.rcParams['axes.labelweight']=50
 
 present_in_tree, tip_to_tree = dp.parse_tree_tips(tree_dir)
 
-query_dict, query_id_dict, present_lins, tree_to_tip = dp.parse_filtered_metadata(filtered_db_metadata, tip_to_tree) #Just the lines with their queries plus the closest match in db
+query_dict, tree_to_tip = dp.parse_filtered_metadata(filtered_db_metadata, tip_to_tree) #Just the lines with their queries plus the closest match in db
 
 if input_csv != '':
-    query_dict = dp.parse_input_csv(input_csv, query_id_dict, input_name_column) #Any query information they have provided
+    query_dict = dp.parse_input_csv(input_csv, query_dict, input_name_column) #Any query information they have provided
 
 full_tax_dict = dp.parse_full_metadata(query_dict, full_metadata_file, present_in_tree, database_name_column)
 ```
@@ -135,7 +135,7 @@ The nearest neighbours of each of the query sequences are shown below to enable 
 
 
 ```python, name="make_trees", echo=False, include=False, figure=False
-too_tall_trees, overall_tree_number, overall_df_dict = tree_viz.make_all_of_the_trees(tree_dir, full_tax_dict, query_dict, desired_fields, label_fields)
+too_tall_trees, overall_tree_number, overall_df_dict = tree_viz.make_all_of_the_trees(tree_dir, full_tax_dict, query_dict)
 ``` 
 
 ```python, name="show_trees", echo=False, results='raw'
@@ -169,14 +169,14 @@ bar_count, bar_to_tree = tree_viz.describe_tree_background(full_tax_dict, tree_d
 ```
 
 ```python, name="display bar charts", echo=False, results='raw'
-for i in range(bar_count):
+for i in range(1,bar_count+1):
     tree_name = bar_to_tree[i]
     right_rows = df["Tree"]==tree_name
     relevant_df = df[right_rows].drop(columns=["Tree"])
     print(relevant_df.to_markdown())
     print("   ")
 
-    print("![](" + figdir + "/" + name_stem + "_tree_background_" + str(i+1) + ".png)")
+    print("![](" + figdir + "/" + name_stem + "_tree_background_" + str(i) + ".png)")
 ```
 
 

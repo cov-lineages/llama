@@ -19,7 +19,7 @@ def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, treedir
                             "output_directory": f'output_directory = "{outdir}"\n',
                             "name_stem_input": f'name_stem_input = "{name_stem}"\n',
                             "full_metadata_file": f'full_metadata_file = "{metadata}"\n',
-                            "filtered_metadata": f'filtered_metadata = "{filtered_metadata}"\n',
+                            "filtered_db_metadata": f'filtered_db_metadata = "{filtered_metadata}"\n',
                             "input_csv": f'input_csv = "{input_csv}"\n',
                             "input_directory": f'input_directory = "{treedir}"\n',
                             "figdir": f'figdir = "{figdir}"\n',
