@@ -1,9 +1,4 @@
-```python, name="header",echo=False, results='raw'
-import os
-figdir = "" ##CHANGE
-
-    print("# Local lineage report")
-```
+# Local lineage report
 
 ```python, name="import dependencies", echo=False
 import matplotlib.pyplot as pyplot
@@ -23,20 +18,15 @@ import scipy as sp
 import warnings
 warnings.filterwarnings("ignore")
 
-from dateutil.relativedelta import relativedelta, FR
-
-filtered_metadata = "" ##CHANGE
+filtered_db_metadata = "" ##CHANGE
 input_csv = "" ##CHANGE
 full_metadata_file = "" ##CHANGE
-desired_fields = "" ##CHANGE
 
-tree_dir = "" ##CHANGE
 
 QC_fail_file = "" ##CHANGE
 missing_seq_file = "" ##CHANGE
 
 input_directory = "" ##CHANGE
-
 output_directory = "" ##CHANGE
 name_stem_input = "" ##CHANGE
 
@@ -46,36 +36,34 @@ else:
     name_stem = name_stem_input
 
 summary_dir = "" ##CHANGE
+figdir = "" ##CHANGE
+tree_dir = "" ##CHANGE
 
+input_name_column = "" ##CHANGE
+database_name_column = "" ##CHANGE
 
-#font_list = font_manager.fontManager.addfont(font_file)
 font_props = font_manager.FontProperties(family=["sans-serif"])
-#font_props = font_manager.FontProperties(family=["helveticaneue","helvetica","definitelynotarial",'sans-serif'])
-
 a = matplotlib.font_manager.FontManager()
 a.findfont(font_props, fallback_to_default=True)
 
 pyplot.rcParams.update({'figure.max_open_warning': 0})
 
-#mpl.rcParams['font.family'] = 'helveticaneue'
 mpl.rcParams['font.weight']=50
 mpl.rcParams['axes.labelweight']=50
 
 ```
 
 
-
 ```python, name="parse metadata", echo=False, results='raw'
 
 present_in_tree, tip_to_tree = dp.parse_tree_tips(tree_dir)
 
-query_dict, query_id_dict, present_lins, tree_to_tip = dp.parse_reduced_metadata(filtered_db_metadata, tip_to_tree) #Just the lines with their queries plus the closest match in db
+query_dict, tree_to_tip = dp.parse_filtered_metadata(filtered_db_metadata, tip_to_tree) #Just the lines with their queries plus the closest match in db
 
 if input_csv != '':
-    adm2_to_adm1 = dp.prepping_adm2_adm1_data(full_metadata_file)
-    query_dict = dp.parse_input_csv(input_csv, query_id_dict, desired_fields, label_fields, adm2_to_adm1, False) #Any query information they have provided
+    query_dict = dp.parse_input_csv(input_csv, query_dict, input_name_column) #Any query information they have provided
 
-full_tax_dict = dp.parse_full_metadata(query_dict, full_metadata_file, present_lins, present_in_tree)
+full_tax_dict = dp.parse_full_metadata(query_dict, full_metadata_file, present_in_tree, database_name_column)
 ```
 
 ```python, name="QC fails", echo=False, results="raw"
@@ -132,44 +120,24 @@ elif not_in_db_number == 0:
 
 ```
 
-The table below is a summary of these sequences provided with metadata, along with their associated UK lineage and global lineage. 
-
-If additional information was provided in the input csv, and it was specified that it should be included in the analysis, it will also be displayed here.
+The table below is a summary of these sequences provided with metadata, along with the global lineage they have been assigned.
 
 ```python, name="first_table", echo=False, results="tex"
 
-df = dp.make_initial_table(query_dict, desired_fields, label_fields,False)
+df = dp.make_initial_table(query_dict)
 
 print(df.to_markdown())
 ```
 
 ## Phylogenies
 
-The nearest neighbours of each of the query sequences are shown below in order to show their phylogenetic context.
-
-They are coloured by the input field specified. 
-If no fields were specified, they are coloured by Adm1. 
-
-If there was no geographical information provided (either adm1 or adm2), the sequences are left uncoloured. 
-In order to generate trees coloured by specific metadata, please provide this names of the appropriate metadata columns on the command line.
+The nearest neighbours of each of the query sequences are shown below to enable the assessment of monophyly.
 
 
 ```python, name="make_trees", echo=False, include=False, figure=False
-too_tall_trees, overall_tree_number, colour_dict_dict, overall_df_dict = tree_viz.make_all_of_the_trees(tree_dir, full_tax_dict, query_dict, desired_fields, label_fields)
-```
-```python, name="make_legend", echo=False, include=False, results='tex'
-for trait, colour_dict in colour_dict_dict.items():
-    tree_viz.make_legend(colour_dict)
-    number_of_options = len(colour_dict)
-    if number_of_options > 15:
-        print("WARNING: There are more than 15 options to colour by for " + trait + ", which will make it difficult to see the differences between colours. Consider adding the trait to the taxon labels on the tree by using the flag _--label-fields_ when calling CIVET.")
-```
-```python,name="show_legend",echo=False,results='raw'
-for i, trait in enumerate(colour_dict_dict.keys()):
-    print("The legend for " + trait + " is shown below.\n")
-    print("![](" + figdir + "/" + name_stem + "_make_legend_" + str(i+1) + ".png)")
-    print("\n")
-```
+too_tall_trees, overall_tree_number, overall_df_dict = tree_viz.make_all_of_the_trees(tree_dir, full_tax_dict, query_dict)
+``` 
+
 ```python, name="show_trees", echo=False, results='raw'
 
     for i in range(1,overall_tree_number+1):
@@ -177,13 +145,10 @@ for i, trait in enumerate(colour_dict_dict.keys()):
         lookup = "tree_" + str(i)
         if len(tree_to_tip[lookup]) == 1:
             print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " query.")
-            print("Given that there are no other sequences in the query dataset that are in this tree, transmission between this sequence and other queries can be ruled out.")
         else:
             print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " queries.")
-            print("There are multiple query sequences in this tree, and so transmission cannot be ruled out, but neither can it be confirmed. Therefore their relationship must be investigated further using epidemiological data.")
         print("   ")
         print("![](" + figdir + "/" + name_stem + "_make_trees_" + str(i) + ".png)")
-
 
 ```
 
@@ -192,49 +157,29 @@ if too_tall_trees != []:
     for tree in too_tall_trees:
         print("Tree" + str(tree) + " is too large to be rendered here.")
 ```
+
 ## Tree background
 
 The following plots describe the data in the collapsed nodes in more detail.
 If more than one country was present, the bar chart describes the number of sequences present in each country. 
 Where there were 10 countries or more, the largest 10 have been taken. 
-If a UK sequence is present in the collapsed node, it is always shown in the plot.
 
 ```python, name="tree_background", echo=False, include=False, fig=False
-bar_count = tree_viz.describe_tree_background(full_tax_dict, tree_dir)
+bar_count, bar_to_tree = tree_viz.describe_tree_background(full_tax_dict, tree_dir, overall_df_dict)
 ```
+
 ```python, name="display bar charts", echo=False, results='raw'
-for i in range(bar_count):
-    print("![](" + figdir + "/" + name_stem + "_tree_background_" + str(i+1) + ".png)")
+for i in range(1,bar_count+1):
+    tree_name = bar_to_tree[i]
+    right_rows = df["Tree"]==tree_name
+    relevant_df = df[right_rows].drop(columns=["Tree"])
+    print(relevant_df.to_markdown())
+    print("   ")
+
+    print("![](" + figdir + "/" + name_stem + "_tree_background_" + str(i) + ".png)")
 ```
 
 
-```python, name='Regional-scale', echo=False, results='raw'
-if local_lineages != '':
-    print("## Regional-scale background UK lineage mapping")
-    centralLoc = [ t for t in local_lin_tables.split(';') if "_central_" in t]
-    centralName = centralLoc[0].split('/')[-1].split("_")[0]
-    linmapList=[f'./{"/".join(p.split("/")[-2:])}' for p in local_lin_maps.split(';')]
-    tableList=[t for t in local_lin_tables.split(';') if "_central_" not in t]
-
-    print(f'Based on the sample density for submitted sequences with adm2 metadata, **{centralName}** was determined to be the focal NHS Health-board for region-scale UK-lineage analysis.')
-
-    print(f'The below figure visualises the relative proportion of assigned UK-Lineages for samples collected and sequenced within the central healthboard region for the defined time-frame.')
-    print ("![]("+linmapList[0]+")")
-    print('\n')
-    print(f'The below figure visualises the relative proportion of assigned UK-Lineages for samples collected and sequenced within neighbouring healthboard regions for the defined time-frame.')
-    print ("![]("+linmapList[1]+")")
-    print('\n')
-    print(f'Tabulated lineage data for the **central** health-board region:')
-    with open(centralLoc[0]) as file:
-        contents = file.read()
-        print (contents)
-    print(f'Tabulated lineage data for the **neighbouring** health-board regions:')
-
-    for each in tableList:
-        with open(each) as file:
-            contents = file.read()
-            print (contents)
-```
 
 ### Software versions
 
@@ -256,19 +201,12 @@ print("Scipy version " + sp.__version__)
 print("Baltic")
 
 
-todays_date = dt.date.today()
-
-#This just takes last Friday so if a more continuous pipeline is implemented this will have to be cleverer. #We're now at that point
-last_friday = todays_date + relativedelta(weekday=FR(-1))
-print("The db data used here was submitted in batch on " + str(last_friday))
-
 print("llama version is 0.1")
 ```
 
-## Acknowledgements
+### Acknowledgements
 
 This report was generated by llama.
-
 
 Tree data was visualised using baltic (https://github.com/evogytis/baltic)
 

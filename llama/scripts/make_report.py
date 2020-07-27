@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import os
-from pweave import *
+from pweave import weave
 import argparse
 import shutil
 
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 
-def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, treedir, figdir, report_template, failed_seqs, no_seq):
+def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, treedir, figdir, report_template, failed_seqs, no_seq, input_column, data_column):
 
     name_stem = ".".join(outfile.split(".")[:-1])
     with open(outfile, 'w') as pmd_file:
@@ -19,14 +19,16 @@ def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, treedir
                             "output_directory": f'output_directory = "{outdir}"\n',
                             "name_stem_input": f'name_stem_input = "{name_stem}"\n',
                             "full_metadata_file": f'full_metadata_file = "{metadata}"\n',
-                            "filtered_metadata": f'filtered_metadata = "{filtered_metadata}"\n',
+                            "filtered_db_metadata": f'filtered_db_metadata = "{filtered_metadata}"\n',
                             "input_csv": f'input_csv = "{input_csv}"\n',
                             "input_directory": f'input_directory = "{treedir}"\n',
                             "figdir": f'figdir = "{figdir}"\n',
                             "tree_dir": f'tree_dir = "{treedir}"\n',
                             "summary_dir": f'summary_dir = "{summary_dir}"\n',
                             "QC_fail_file": f'QC_fail_file = "{failed_seqs}"\n',
-                            "missing_seq_file": f'missing_seq_file = "{no_seq}"\n'
+                            "missing_seq_file": f'missing_seq_file = "{no_seq}"\n',
+                            "input_name_column": f'input_name_column = "{input_column}"\n',
+                            "database_name_column": f'database_name_column = "{data_column}"\n'
                             }
         with open(md_template) as f:
             for l in f:
@@ -58,9 +60,12 @@ def main():
     parser.add_argument("--outdir", help="output directory",dest="outdir")
     parser.add_argument("--figdir", help="output directory",dest="figdir")
 
+    parser.add_argument('--input-column', action="store",help="Column in input csv file to match with database. Default: name", dest="input_column",default="name")
+    parser.add_argument('--data-column', action="store",help="Column in database to match with input csv file. Default: sequence_name", dest="data_column",default="sequence_name")
+
     args = parser.parse_args()
 
-    make_report(args.metadata, args.input_csv, args.filtered_metadata, args.outfile, args.outdir, args.treedir, args.figdir, args.report_template, args.failed_seqs,args.no_seq)
+    make_report(args.metadata, args.input_csv, args.filtered_metadata, args.outfile, args.outdir, args.treedir, args.figdir, args.report_template, args.failed_seqs,args.no_seq, args.input_column, args.data_column)
 
 
 if __name__ == "__main__":
