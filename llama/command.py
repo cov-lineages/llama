@@ -149,6 +149,7 @@ def main(sysargs = sys.argv[1:]):
         threads = 1
     print(f"Number of threads: {threads}\n")
 
+
     # create the config dict to pass through to the snakemake file
     config = {
         "query":query,
@@ -248,7 +249,7 @@ def main(sysargs = sys.argv[1:]):
     # accessing package data and adding to config dict
     if args.outgroup:
         reference_fasta = os.path.join(cwd, args.outgroup)
-        if not os.path.isfile(ref_file):
+        if not os.path.isfile(reference_fasta):
             sys.stderr.write(f"""Error: cannot find specified outgroup file at {args.outgroup}""")
             sys.exit(-1)
         else:
@@ -269,6 +270,9 @@ def main(sysargs = sys.argv[1:]):
 
     if args.report:
         config["report"] = "True"
+        config["report_template"] =  os.path.join(thisdir, 'scripts','report_template.pmd')
+        footer_fig = pkg_resources.resource_filename('llama', 'data/footer.png')
+        config["footer"] = footer_fig
     else:
         config["report"] = "False"
     

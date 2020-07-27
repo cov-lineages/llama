@@ -27,7 +27,8 @@ if config["report"] =="True":
     rule all:
         input:
             os.path.join(config["outdir"],"combined_metadata.csv"),
-            os.path.join(config["outdir"],"local_trees","collapse_report.txt")
+            os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
+            os.path.join(config["outdir"], "llama_report.md")
 else:
     rule all:
         input:

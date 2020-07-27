@@ -231,7 +231,8 @@ rule make_report:
         query = config["query"],
         combined_metadata = os.path.join(config["outdir"],"combined_metadata.csv"),
         metadata = config["metadata"],
-        # report_template = config["report_template"],
+        footer = config["footer"],
+        report_template = config["report_template"],
         no_seq = rules.get_closest_in_db.output.not_processed
     params:
         treedir = os.path.join(config["outdir"],"local_trees"),
@@ -239,23 +240,26 @@ rule make_report:
         rel_figdir = os.path.join(".","figures"),
         figdir = os.path.join(config["outdir"],"figures"),
         failure = config["qc_fail"],
-        input_column = config["input-column"]
+        input_column = config["input_column"],
         data_column = config["data_column"]
     output:
-        outfile = os.path.join(config["outdir"], "llama_report.pmd") #change this back to md after debugging
-    # shell:
-    #     "cp {input.footer:q} {output.footer_fig:q}"
-    shell:
-        "make_report.py "
-        "--input-csv {input.query:q} "
-        "--figdir {params.rel_figdir:q} "
-        "{params.failure} "
-        "--no-seq-provided {input.no_seq} "
-        "--treedir {params.treedir:q} "
-        # "--report-template {input.report_template:q} "
-        "--filtered-metadata {input.combined_metadata:q} "
-        "--metadata {input.metadata:q} "
-        "--outfile {output.outfile:q} "
-        "--outdir {params.outdir:q}"
-        "--input-column {params.input_column:q}"
-        "--data-column {params.data_column:q}"
+        outfile = os.path.join(config["outdir"], "llama_report.md"), 
+        footer_fig = os.path.join(config["outdir"], "figures", "footer.png")
+    run:
+        shell("""
+            cp {input.footer:q} {output.footer_fig:q}
+        """)
+        shell(
+            "make_report.py "
+            "--input-csv {input.query:q} "
+            "--figdir {params.rel_figdir:q} "
+            "{params.failure} "
+            "--no-seq-provided {input.no_seq} "
+            "--treedir {params.treedir:q} "
+            "--report-template {input.report_template:q} "
+            "--filtered-metadata {input.combined_metadata:q} "
+            "--metadata {input.metadata:q} "
+            "--outfile {output.outfile:q} "
+            "--outdir {params.outdir:q}"
+            "--input-column {params.input_column:q}"
+            "--data-column {params.data_column:q}")
