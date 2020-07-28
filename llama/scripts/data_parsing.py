@@ -172,6 +172,14 @@ def make_initial_table(query_dict):
 
     df = pd.DataFrame(df_dict)
 
+    new_lineages = []
+    for i in df["Global lineage"]:
+        link = "(https://cov-lineages.org/lineages/lineage_" + i + ".html)"
+        new_lin = "[" + i + "]" + link
+        new_lineages.append(new_lin)
+	
+    df["Global lineage"] = new_lineages
+
     df.set_index("Query ID", inplace=True)
 
     return df
