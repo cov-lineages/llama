@@ -9,7 +9,7 @@ import datetime as dt
 import math
 
 
-class taxon(): #might want country in here, not sure yet
+class taxon(): 
 
     def __init__(self, name, global_lin):
 

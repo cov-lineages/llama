@@ -236,7 +236,7 @@ def summarise_collapsed_node_for_label(tree_dir, focal_node, focal_tree, full_ta
             members = toks[1]
         
             if node_name == focal_node:
-                countries = []
+                lineages = []
                 
                 member_list = members.split(",")
                 number_nodes = str(len(member_list)) + " nodes"
@@ -245,38 +245,38 @@ def summarise_collapsed_node_for_label(tree_dir, focal_node, focal_tree, full_ta
                     if tax in full_tax_dict.keys():
                         taxon_obj = full_tax_dict[tax]
                         
-                        countries.append(taxon_obj.country)
+                        lineages.append(taxon_obj.global_lin)
                     
                     else: #should always be in the full metadata now
                         print("tax missing from full metadata")
                     
-                country_counts = Counter(countries)
+                lineage_counts = Counter(lineages)
 
-                most_common_countries = []
+                most_common_lineages = []
 
-                if len(country_counts) > 5:
+                if len(lineage_counts) > 5:
                     
-                    remaining = len(country_counts) - 5
+                    remaining = len(lineage_counts) - 5
                     
-                    most_common_tups = country_counts.most_common(5)
+                    most_common_tups = lineage_counts.most_common(5)
                     for i in most_common_tups:
-                        most_common_countries.append(i[0])
+                        most_common_lineages.append(i[0])
 
-                    pretty_countries_prep = str(most_common_countries).lstrip("[").rstrip("]").replace("'", "")
+                    pretty_lineages_prep = str(most_common_lineages).lstrip("[").rstrip("]").replace("'", "")
                     
                     if remaining == 1:
-                        pretty_countries = pretty_countries_prep + " and " + str(remaining) + " other"
+                        pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " other"
                     else:
-                        pretty_countries = pretty_countries_prep + " and " + str(remaining) + " others"
+                        pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " others"
                 
                 else:
-                    pretty_countries = str(list(country_counts.keys())).lstrip("[").rstrip("]").replace("'", "")
+                    pretty_lineages = str(list(lineage_counts.keys())).lstrip("[").rstrip("]").replace("'", "")
 
 
                 node_number = node_name.lstrip("inserted_node")
                 pretty_node_name = "Collapsed node " + node_number
 
-                info = pretty_node_name + ": " + number_nodes + " in " + pretty_countries
+                info = pretty_node_name + ": " + number_nodes + " in " + pretty_lineages
 
     return info
 
