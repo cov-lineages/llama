@@ -93,7 +93,7 @@ if count_fails != 0 or count_missing != 0:
     if count_missing != 0:
         print("\n")
         failed_names = dp.print_missing_seqs(missing_seq_file)
-        print("The following seqs were not found in db and a fasta file was not provided, so CIVET was unable to add them into phylogenies:\n")
+        print("The following seqs were not found in db and a fasta file was not provided, so LLAMA was unable to add them into phylogenies:\n")
         for i in failed_names:
             print(" - " + i.replace("'","")) 
 ```
@@ -142,7 +142,7 @@ too_tall_trees, overall_tree_number, overall_df_dict = tree_viz.make_all_of_the_
 
     for i in range(1,overall_tree_number+1):
         tree_name = "Tree " + str(i)
-        lookup = "tree_" + str(i)
+        lookup = "local_" + str(i)
         if len(tree_to_tip[lookup]) == 1:
             print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " query.")
         else:
@@ -170,11 +170,11 @@ bar_count, bar_to_tree = tree_viz.describe_tree_background(full_tax_dict, tree_d
 
 ```python, name="display bar charts", echo=False, results='raw'
 for i in range(1,bar_count+1):
-    tree_name = bar_to_tree[i]
-    right_rows = df["Tree"]==tree_name
-    relevant_df = df[right_rows].drop(columns=["Tree"])
-    print(relevant_df.to_markdown())
-    print("   ")
+    #tree_name = bar_to_tree[i]
+    #right_rows = df["Tree"]==tree_name
+    #relevant_df = df[right_rows].drop(columns=["Tree"])
+    #print(relevant_df.to_markdown())
+    #print("   ")
 
     print("![](" + figdir + "/" + name_stem + "_tree_background_" + str(i) + ".png)")
 ```

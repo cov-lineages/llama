@@ -105,6 +105,8 @@ optional arguments:
                         Column in database to match with input csv file.
                         Default: sequence_name
   --distance DISTANCE   Extraction from large tree radius. Default: 2
+  -r --report           Produces report that renders trees and provides information about 
+                        local phylogenetic context
   -n, --dry-run         Go through the motions but don't actually run
   --tempdir TEMPDIR     Specify where you want the temp stuff to go. Default:
                         $TMPDIR
@@ -141,7 +143,7 @@ Overview:
 
 - After collapsing the nodes, <strong>llama</strong> runs `iqtree` on the new alignment, with the outgroup and query sequences in, and then prunes off the outgroup sequence.
 
-- <strong>llama</strong> then annotates this new phylogeny with lineage assignments and can produce a report (COMING SOON!).
+- <strong>llama</strong> then annotates this new phylogeny with lineage assignments and can produce a report.
 
 ### Output
 

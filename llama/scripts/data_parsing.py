@@ -55,6 +55,7 @@ def parse_filtered_metadata(metadata_file, tip_to_tree):
                 new_taxon.closest = closest_name
             
             relevant_tree = tip_to_tree[query_name]
+
             new_taxon.tree = relevant_tree
 
             tree_to_tip[relevant_tree].append(new_taxon)

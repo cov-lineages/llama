@@ -478,7 +478,7 @@ def describe_tree_background(full_tax_dict, tree_dir, node_table):
                     plt.title(pretty_focal + ": " + nde, size=5)
 
 
-            bar_to_tree[figure_count] = focal_tree
+            bar_to_tree[figure_count] = pretty_focal
 
 
     return figure_count, bar_to_tree
