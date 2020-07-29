@@ -127,38 +127,7 @@ def main(sysargs = sys.argv[1:]):
         print(f"--no-temp: All intermediate files will be written to {outdir}")
         tempdir = outdir
 
-    # find the query csv, or string of ids
-    query = os.path.join(cwd, args.query)
-    if not os.path.exists(query):
-        if args.ids:
-            id_list = args.query.split(",")
-            query = os.path.join(tempdir, "query.csv")
-            with open(query,"w") as fw:
-                fw.write(f"{args.input_column}\n")
-                for i in id_list:
-                    fw.write(i+'\n')
-        else:
-            sys.stderr.write(f"Error: cannot find query file at {query}\nCheck if the file exists, or if you're inputting an id string (e.g. EPI12345,EPI23456), please use in conjunction with the `--id-string` flag\n.")
-            sys.exit(-1)
-    else:
-        print(f"Input file: {query}")
 
-    # parse the input csv, check col headers
-    queries = []
-    with open(query, newline="") as f:
-        reader = csv.DictReader(f)
-        column_names = reader.fieldnames
-        if args.input_column not in column_names:
-            sys.stderr.write(f"Error: Input file missing header field {args.input_column}\nEither specifiy `--input-column` or supply a column with header `name`\n")
-            sys.exit(-1)
-                    
-        print("Input querys to process:")
-        for row in reader:
-            queries.append(row[args.input_column])
-            
-            print(row[args.input_column])
-        print(f"Total: {len(queries)}")
-    print('\n')
 
     # how many threads to pass
     if args.threads:
@@ -170,7 +139,6 @@ def main(sysargs = sys.argv[1:]):
 
     # create the config dict to pass through to the snakemake file
     config = {
-        "query":query,
         "outdir":outdir,
         "tempdir":tempdir,
         "trim_start":265,   # where to pad to using datafunk
@@ -181,6 +149,41 @@ def main(sysargs = sys.argv[1:]):
         "data_column":args.data_column,
         "force":"True"
         }
+
+    if args.query:
+        # find the query csv, or string of ids
+        query = os.path.join(cwd, args.query)
+        if not os.path.exists(query):
+            if args.ids:
+                id_list = args.query.split(",")
+                query = os.path.join(tempdir, "query.csv")
+                with open(query,"w") as fw:
+                    fw.write(f"{args.input_column}\n")
+                    for i in id_list:
+                        fw.write(i+'\n')
+            else:
+                sys.stderr.write(f"Error: cannot find query file at {query}\nCheck if the file exists, or if you're inputting an id string (e.g. EPI12345,EPI23456), please use in conjunction with the `--id-string` flag\n.")
+                sys.exit(-1)
+        else:
+            print(f"Input file: {query}")
+
+        # parse the input csv, check col headers
+        queries = []
+        with open(query, newline="") as f:
+            reader = csv.DictReader(f)
+            column_names = reader.fieldnames
+            if args.input_column not in column_names:
+                sys.stderr.write(f"Error: Input file missing header field {args.input_column}\nEither specifiy `--input-column` or supply a column with header `name`\n")
+                sys.exit(-1)
+                        
+            print("Input querys to process:")
+            for row in reader:
+                queries.append(row[args.input_column])
+                
+                print(row[args.input_column])
+            print(f"Total: {len(queries)}")
+        print('\n')
+        config["query"] = query
 
     # find the data files
     data_dir = ""
