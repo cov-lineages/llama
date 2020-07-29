@@ -112,15 +112,18 @@ def parse_tree_tips(tree_dir):
                     tip_to_tree[k.name] = tree_name
 
         elif fn.endswith(".txt"):
+            tree_name = fn.split(".")[0]
             with open(tree_dir + "/" + fn) as f:
                 for l in f:
                     tip_string = l.strip("\n").split("\t")[1]
                     tip_list = tip_string.split(",")
                     tips.extend(tip_list)
+                    for i in tip_list:
+                        tip_to_tree[i] = tree_name
 
     return tips, tip_to_tree
 
-def parse_full_metadata(query_dict, full_metadata, present_in_tree, database_name_column):
+def parse_full_metadata(query_dict, full_metadata, tip_to_tree, present_in_tree, database_name_column):
 
     full_tax_dict = query_dict.copy()
 
@@ -143,6 +146,8 @@ def parse_full_metadata(query_dict, full_metadata, present_in_tree, database_nam
                 
                 new_taxon.sample_date = date
                 new_taxon.country = country
+
+                new_taxon.tree = tip_to_tree[seq_name]
 
                 full_tax_dict[seq_name] = new_taxon
                                     
@@ -171,6 +176,14 @@ def make_initial_table(query_dict):
             df_dict["Tree"].append("NA") #this should never happen, it's more error catching
 
     df = pd.DataFrame(df_dict)
+
+    new_lineages = []
+    for i in df["Global lineage"]:
+        link = "(https://cov-lineages.org/lineages/lineage_" + i + ".html)"
+        new_lin = "[" + i + "]" + link
+        new_lineages.append(new_lin)
+	
+    df["Global lineage"] = new_lineages
 
     df.set_index("Query ID", inplace=True)
 
