@@ -63,7 +63,7 @@ query_dict, tree_to_tip = dp.parse_filtered_metadata(filtered_db_metadata, tip_t
 if input_csv != '':
     query_dict = dp.parse_input_csv(input_csv, query_dict, input_name_column) #Any query information they have provided
 
-full_tax_dict = dp.parse_full_metadata(query_dict, full_metadata_file, present_in_tree, database_name_column)
+full_tax_dict = dp.parse_full_metadata(query_dict, full_metadata_file, tip_to_tree, present_in_tree, database_name_column)
 ```
 
 ```python, name="QC fails", echo=False, results="raw"
@@ -133,17 +133,22 @@ print(df.to_markdown())
 ## Phylogenies
 
 The nearest neighbours of each of the query sequences are shown below to enable the assessment of monophyly.
+Underneath each tree is a bar chart summarising the lineages present.
 
 
 ```python, name="make_trees", echo=False, include=False, figure=False
 too_tall_trees, overall_tree_number, overall_df_dict = tree_viz.make_all_of_the_trees(tree_dir, full_tax_dict, query_dict)
 ``` 
+```python, name="make_lineage_bars", echo=False, include=False, figure=False
+tree_to_lin_fig = tree_viz.describe_lineages(full_tax_dict)
+```
 
 ```python, name="show_trees", echo=False, results='raw'
 
     for i in range(1,overall_tree_number+1):
         tree_name = "Tree " + str(i)
         lookup = "local_" + str(i)
+        print("## " + tree_name)
         if len(tree_to_tip[lookup]) == 1:
             print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " query.")
         else:
@@ -151,33 +156,15 @@ too_tall_trees, overall_tree_number, overall_df_dict = tree_viz.make_all_of_the_
         print("   ")
         print("![](" + figdir + "/" + name_stem + "_make_trees_" + str(i) + ".png)")
 
+        print("#### Lineage summary")
+        print("![](" + figdir + "/" + name_stem + "_make_lineage_bars_" + str(tree_to_lin_fig[lookup]) + ".png)")
+
 ```
 
 ```python, name="Tree error checking", echo=False, results='raw'
 if too_tall_trees != []:
     for tree in too_tall_trees:
         print("Tree" + str(tree) + " is too large to be rendered here.")
-```
-
-## Tree background
-
-The following plots describe the location of the sequences in the collapsed nodes.
-If more than one country was present, the bar chart describes the number of sequences present in each country. 
-Where there were 10 countries or more, the largest 10 have been taken. 
-
-```python, name="tree_background", echo=False, include=False, fig=False
-bar_count, bar_to_tree = tree_viz.describe_tree_background(full_tax_dict, tree_dir, overall_df_dict)
-```
-
-```python, name="display bar charts", echo=False, results='raw'
-for i in range(1,bar_count+1):
-    #tree_name = bar_to_tree[i]
-    #right_rows = df["Tree"]==tree_name
-    #relevant_df = df[right_rows].drop(columns=["Tree"])
-    #print(relevant_df.to_markdown())
-    #print("   ")
-
-    print("![](" + figdir + "/" + name_stem + "_tree_background_" + str(i) + ".png)")
 ```
 
 

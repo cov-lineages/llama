@@ -342,144 +342,39 @@ def summarise_node_table(tree_dir, focal_tree, full_tax_dict):
 
     return df_dict
 
+def describe_lineages(full_tax_dict):
 
-def describe_tree_background(full_tax_dict, tree_dir, node_table):
+    lineages_prep = defaultdict(list)
+    lineages_present = defaultdict(dict)
 
-    tree_lst = sort_trees_index(tree_dir)
-    bar_to_tree = {}
+    for tax in full_tax_dict.values():
+        if tax.tree != "NA":
+            key = tax.tree 
+            lineages_prep[key].append(tax.global_lin)
 
-    hidden_countries = defaultdict(list)
+    for tree, lineages in lineages_prep.items():
+        counts = Counter(lineages)
+        lineages_present[tree] = counts
 
-    figure_count = 0
+    fig_count = 1
+    tree_to_lin_fig = {}
+    for tree, counts in lineages_present.items():
+        
+        fig, ax = plt.subplots(1,1, figsize=(5,5), dpi=100)
 
-    for fn in tree_lst:
-        focal_tree = "local_" + str(fn)
-        focal_tree_file = tree_dir + "/" + focal_tree + ".txt"
-        pretty_focal = "Tree " + str(fn)
+        x = list(counts.keys())
+        y = list(counts.values())
 
-        collapsed_dict = defaultdict(list)
+        ax.bar(x,y)
 
-        with open(focal_tree_file) as f:
-            next(f)
-            for l in f:
-                toks = l.strip("\n").split("\t")
-                seqs = toks[1].split(",")
-
-                node_number = toks[0].lstrip("inserted_node")
-                new_name = "Collapsed node" + node_number
-                collapsed_dict[new_name] = seqs
+        ax.set_xticklabels(x, rotation=45)
+        ax.set_ylabel("Number of sequences")
+        ax.set_xlabel("Global lineage")
+        
+        tree_to_lin_fig[tree] = fig_count
+        fig_count += 1
     
-            ndes_country_counts = defaultdict(dict)
-            nodes = []
+    return tree_to_lin_fig
+    
 
-            for nde, seqs in collapsed_dict.items():
-                countries = []
-                for i in seqs:
-                    obj = full_tax_dict[i]
-                    countries.append(obj.country)
-
-                    country_counts = Counter(countries)
-                                
-                if len(country_counts) > 10:
-                    keep_countries = dict(country_counts.most_common(10))
-
-                    hidden_countries[focal_tree].append(nde)
-                    
-                else:
-                    keep_countries = country_counts
-                    
-                if len(country_counts) > 1:
-                    
-                    ndes_country_counts[nde] = keep_countries
-                    nodes.append(nde)
-                            
-            if len(ndes_country_counts) > 1:
-                
-                figure_count += 1
-
-                plt.rc('ytick', labelsize=5)
-                
-                count = 0
-
-                rows = math.ceil(len(ndes_country_counts)/5)
-                
-
-                if rows == 1:
-                    fig, axs = plt.subplots(rows,5, figsize=(10,2)) 
-
-                    fig.tight_layout()
-                    count = 0      
-                    for nde, country_counts in ndes_country_counts.items():
-
-                        x = country_counts.keys()
-                        y = country_counts.values()
-
-                        # print("1 counts" + str(count))
-                        axs[count].bar(x,y, color="goldenrod")
-                        axs[count].set_title(nde, size=8)
-                        axs[count].set_xticklabels(x,rotation=90, size=5)
-                        #axs[count].set_yticklabels(size=5)
-                        
-                        count += 1
-
-                 
-                    fig.suptitle(pretty_focal,y=1.1,x=0.05, size=10)
-                
-                else:
-                    fig, axs = plt.subplots(rows,5,figsize=(10,10))
-                    fig.subplots_adjust(hspace=1.0, wspace=0.7)
-                    # fig.tight_layout()
-                    
-                    
-                    for nrow in range(0,rows):
-                        for i in range(0,5):
-                            try:
-                                relevant_nde = nodes[(nrow*5) + i]
-                                
-                                x = ndes_country_counts[relevant_nde].keys()
-                                y = ndes_country_counts[relevant_nde].values()
-
-                                axs[nrow][i].bar(x,y, color="goldenrod")
-                                axs[nrow][i].set_title(relevant_nde, size=8)
-                                axs[nrow][i].set_xticklabels(x,rotation=70, size=5)
-                                # axs[nrow][i].set_yticklabels(y, size=5)
-                            except IndexError:
-                                continue
-
-               
-                    fig.suptitle(pretty_focal,y=0.95,x=0.1, size=10)
-
-                if len(ndes_country_counts) != rows*5:
-                    number_empty_ones = rows*5 - len(ndes_country_counts)
-                    for_removal = [i for i in range((rows*5-number_empty_ones),rows*5)]
-
-                    for j in for_removal:
-                         fig.delaxes(axs.flatten()[j])
-
-                
-
-
-                    
-            elif len(ndes_country_counts) == 1:
-                
-                figure_count += 1
-                plt.figure(figsize=(2,2))
-
-                for nde, country_counts in ndes_country_counts.items():
-                    
-                    x = country_counts.keys()
-                    y = country_counts.values()
-
-                    plt.bar(x,y, color="goldenrod")
-                    # plt.title(nde)
-                    plt.xticks(size=5, rotation=90)
-                    plt.yticks(size=5)
-
-                    plt.title(pretty_focal + ": " + nde, size=5)
-
-
-            bar_to_tree[figure_count] = pretty_focal
-
-
-    return figure_count, bar_to_tree
 
