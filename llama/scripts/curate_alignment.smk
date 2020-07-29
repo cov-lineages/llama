@@ -3,7 +3,9 @@ from Bio import SeqIO
 import os
 import collections
 
-
+rule all:
+    input:
+        os.path.join(config["outdir"],"alignment.fasta")
 
 rule minimap2_db_to_reference:
     input:
@@ -29,7 +31,7 @@ rule datafunk_trim_and_pad:
         trim_end = config["trim_end"],
         insertions = os.path.join(config["tempdir"],"post_qc_query.insertions.txt")
     output:
-        fasta = os.path.join(config["tempdir"],"seqs_db.aligned.fasta")
+        fasta = os.path.join(config["outdir"],"alignment.fasta")
     shell:
         """
         datafunk sam_2_fasta \

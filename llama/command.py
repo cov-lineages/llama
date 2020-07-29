@@ -29,27 +29,35 @@ def main(sysargs = sys.argv[1:]):
 
     parser = argparse.ArgumentParser(prog = _program, 
     description='llama: Local Lineage And Monophyly Assessment', 
-    usage='''llama <query> [options]''')
+    usage='''llama -i <input.csv> -d <path/to/data> [options]''')
 
-    parser.add_argument('query',help="Input csv file with minimally `name` as a column header. Alternatively, `--input-column` can specifiy a column name other than `name`")
-    parser.add_argument('-i',"--id-string", action="store_true",help="Indicates the input is a comma-separated id string with one or more query ids. Example: `EDB3588,EDB3589`.", dest="ids")
-    parser.add_argument('--fasta', action="store",help="Optional fasta query. Fasta sequence names must exactly match those in your input query.", dest="fasta")
+    parser.add_argument('-i','--input',help="Input csv file with minimally `name` as a column header. Alternatively, `--input-column` can specifiy a column name other than `name`",dest="query")
+    parser.add_argument('-f','--fasta', action="store",help="Optional fasta query. Fasta sequence names must exactly match those in your input query.", dest="fasta")
+
+    parser.add_argument('-a',"--align-sequences", action="store_true",help="Just align sequences.", dest="align")
+    parser.add_argument('-s','--seqs', action="store",help="Sequence file containing sequences used to create the tree. For use in combination with the `--align-sequences` option.", dest="seqs")
     parser.add_argument('-ns','--no-seqs', action="store_true",help="Alignment not available. Note, to work, all queries must already be in global tree.", dest="no_seqs")
+    
+    parser.add_argument("-r","--report",action="store_true",help="Generate markdown report of input queries and their local trees")
+
+    parser.add_argument("--id-string", action="store_true",help="Indicates the input is a comma-separated id string with one or more query ids. Example: `EDB3588,EDB3589`.", dest="ids")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
-    parser.add_argument("--outgroup",action="store",help="Optional outgroup sequence to root local subtrees. Default an anonymised sequence that is at the base of the global SARS-CoV-2 phylogeny.")
     parser.add_argument('-d','--datadir', action="store",help="Local directory that contains the data files")
-    parser.add_argument('--input-column', action="store",help="Column in input csv file to match with database. Default: name", dest="input_column",default="name")
-    parser.add_argument('--data-column', action="store",help="Column in database to match with input csv file. Default: sequence_name", dest="data_column",default="sequence_name")
-    parser.add_argument('--distance', action="store",help="Extraction from large tree radius. Default: 2", dest="distance",default=2)
-    parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
+    
+    parser.add_argument('--input-column', action="store",help="Column in input csv file to match with database. Default: name", dest="input_column",default="name")
+    parser.add_argument('--data-column', action="store",help="Column in database to match with input csv file. Default: sequence_name", dest="data_column",default="sequence_name")
+    
+    parser.add_argument('--distance', action="store",help="Extraction from large tree radius. Default: 2", dest="distance",default=2)
     parser.add_argument('--collapse-threshold', action='store',type=int,help="Minimum number of nodes to collapse on. Default: 1", dest="threshold", default=1)
-    parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
-    parser.add_argument("-r","--report",action="store_true",help="Generate markdown report of input queries and their local trees")
-    parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed to attempt analysis. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed to attempt analysis. Default: 10000",dest="minlen")
+    
+    parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
+    parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
+    parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
+    parser.add_argument("--outgroup",action="store",help="Optional outgroup sequence to root local subtrees. Default an anonymised sequence that is at the base of the global SARS-CoV-2 phylogeny.")
     parser.add_argument("-v","--version", action='version', version=f"llama {__version__}")
 
     # Exit with help menu if no args supplied
@@ -63,6 +71,8 @@ def main(sysargs = sys.argv[1:]):
 
     if args.no_seqs:
         snakefile = os.path.join(thisdir, 'scripts', 'no_seqs_snakefile.smk')
+    elif args.align:
+        snakefile = os.path.join(thisdir, 'scripts', 'curate_alignment.smk')
     else:
         snakefile = os.path.join(thisdir, 'scripts','Snakefile')
     if not os.path.exists(snakefile):
@@ -174,55 +184,71 @@ def main(sysargs = sys.argv[1:]):
 
     # find the data files
     data_dir = ""
-    if args.datadir:
-        data_dir = os.path.join(cwd, args.datadir)
-        metadata,seqs,tree = ("","","")
-        
-        seqs = os.path.join(data_dir,"alignment.fasta")
-        
-        metadata = os.path.join(data_dir,"metadata.csv")
+    if not args.align:
+        if args.datadir:
+            data_dir = os.path.join(cwd, args.datadir)
+            metadata,seqs,tree = ("","","")
+            
+            seqs = os.path.join(data_dir,"alignment.fasta")
+            
+            metadata = os.path.join(data_dir,"metadata.csv")
 
-        tree = os.path.join(data_dir,"global.tree")
-        if args.no_seqs:
-            if not os.path.isfile(metadata) or not os.path.isfile(tree):
-                sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
-        - global.tree\n\
-        - metadata.csv\n""")
-                sys.exit(-1)
+            tree = os.path.join(data_dir,"global.tree")
+            if args.no_seqs:
+                if not os.path.isfile(metadata) or not os.path.isfile(tree):
+                    sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
+            - global.tree\n\
+            - metadata.csv\n""")
+                    sys.exit(-1)
+                else:
+                    config["metadata"] = metadata
+                    config["tree"] = tree
+
+                    print("Found data:")
+                    print("    -",metadata)
+                    print("    -",tree,"\n")
+
             else:
-                config["metadata"] = metadata
-                config["tree"] = tree
+                if not os.path.isfile(seqs) or not os.path.isfile(metadata) or not os.path.isfile(tree):
+                    sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
+            - alignment.fasta\n\
+            - global.tree\n\
+            - metadata.csv\n""")
+                    sys.exit(-1)
+                else:
+                    config["seqs"] = seqs
+                    config["metadata"] = metadata
+                    config["tree"] = tree
 
-                print("Found data:")
-                print("    -",metadata)
-                print("    -",tree,"\n")
+                    print("Found data:")
+                    print("    -",seqs)
+                    print("    -",metadata)
+                    print("    -",tree,"\n")
         else:
-            if not os.path.isfile(seqs) or not os.path.isfile(metadata) or not os.path.isfile(tree):
-                sys.stderr.write(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
-        - alignment.fasta\n\
-        - global.tree\n\
-        - metadata.csv\n""")
-                sys.exit(-1)
-            else:
-                config["seqs"] = seqs
-                config["metadata"] = metadata
-                config["tree"] = tree
-
-                print("Found data:")
-                print("    -",seqs)
-                print("    -",metadata)
-                print("    -",tree,"\n")
-    else:
-        print("No data directory specified, please specify where to find the data files\n")
-        sys.exit(-1)
-
-    # parse the input db, check col headers
-    with open(metadata, newline="") as f:
-        reader = csv.DictReader(f)
-        column_names = reader.fieldnames
-        if args.data_column not in column_names:
-            sys.stderr.write(f"Error: Metadata file missing header field {args.data_column}\nEither specifiy `--data-column` or supply a column with header `sequence_name`\n")
+            print("No data directory specified, please specify where to find the data files\n")
             sys.exit(-1)
+    elif args.align:
+        if not args.seqs:
+            sys.stderr.write(f"""Error: please input fasta file for alignment""")
+            sys.exit(-1)
+        else:
+            seqs = os.path.join(cwd, args.seqs)
+
+        if not os.path.exists(seqs):
+            sys.stderr.write(f"""Error: cannot find sequence file at {seqs}""")
+            sys.exit(-1)
+        else:
+            config["seqs"] = seqs
+
+
+    if not args.align:
+        # parse the input db, check col headers
+        with open(metadata, newline="") as f:
+            reader = csv.DictReader(f)
+            column_names = reader.fieldnames
+            if args.data_column not in column_names:
+                sys.stderr.write(f"Error: Metadata file missing header field {args.data_column}\nEither specifiy `--data-column` or supply a column with header `sequence_name`\n")
+                sys.exit(-1)
     """ 
     QC steps:
     1) check csv header
