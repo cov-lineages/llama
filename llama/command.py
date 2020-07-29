@@ -293,11 +293,12 @@ def main(sysargs = sys.argv[1:]):
 
     if args.report:
         config["report"] = "True"
-        config["report_template"] =  os.path.join(thisdir, 'scripts','report_template.pmd')
-        footer_fig = pkg_resources.resource_filename('llama', 'data/footer.png')
-        config["footer"] = footer_fig
     else:
         config["report"] = "False"
+    
+    config["report_template"] =  os.path.join(thisdir, 'scripts','report_template.pmd')
+    footer_fig = pkg_resources.resource_filename('llama', 'data/footer.png')
+    config["footer"] = footer_fig
     
     if args.threshold:
         try:
