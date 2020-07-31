@@ -39,6 +39,8 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-ns','--no-seqs', action="store_true",help="Alignment not available. Note, to work, all queries must already be in global tree.", dest="no_seqs")
     
     parser.add_argument("-r","--report",action="store_true",help="Generate markdown report of input queries and their local trees")
+    parser.add_argument('--colour-fields', action="store",help="Comma separated string of fields to colour by in the report.", dest="colour_fields")
+    parser.add_argument('--label-fields', action="store", help="Comma separated string of fields to add to tree report labels.", dest="label_fields")
 
     parser.add_argument("--id-string", action="store_true",help="Indicates the input is a comma-separated id string with one or more query ids. Example: `EDB3588,EDB3589`.", dest="ids")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
@@ -169,12 +171,42 @@ def main(sysargs = sys.argv[1:]):
 
         # parse the input csv, check col headers
         queries = []
+        colour_fields = []
+        labels = []
+
         with open(query, newline="") as f:
             reader = csv.DictReader(f)
             column_names = reader.fieldnames
             if args.input_column not in column_names:
                 sys.stderr.write(f"Error: Input file missing header field {args.input_column}\nEither specifiy `--input-column` or supply a column with header `name`\n")
                 sys.exit(-1)
+
+            if not args.colour_fields:
+                colour_fields.append("NONE")
+            else:
+                desired_fields = args.colour_fields.split(",")
+                for field in desired_fields:
+                    if field in reader.fieldnames:
+                        colour_fields.append(field)
+                    else:
+                        sys.stderr.write(f"Error: {field} field not found in metadata file")
+                        sys.exit(-1)
+
+            config["colour_fields"] = ",".join(colour_fields)
+
+        
+            if not args.label_fields:
+                labels.append("NONE")
+            else:
+                label_fields = args.label_fields.split(",")
+                for label_f in label_fields:
+                    if label_f in reader.fieldnames:
+                        labels.append(label_f)
+                    else:
+                        sys.stderr.write(f"Error: {label_f} field not found in metadata file")
+                        sys.exit(-1)
+
+            config["label_fields"] = ",".join(labels)
                         
             print("Input querys to process:")
             for row in reader:

@@ -105,8 +105,13 @@ optional arguments:
                         Column in database to match with input csv file.
                         Default: sequence_name
   --distance DISTANCE   Extraction from large tree radius. Default: 2
-  -r --report           Produces report that renders trees and provides information about 
+  -r, --report          Produces report that renders trees and provides information about 
                         local phylogenetic context
+  --label-fields LABEL_FIELDS
+                        Adds custom fields to labels to tree tips in the report
+  --colour-fields COLOUR_FIELDS
+                        Colours tips in trees in report by specific fields to aid with
+                        cluster investigation
   -n, --dry-run         Go through the motions but don't actually run
   --tempdir TEMPDIR     Specify where you want the temp stuff to go. Default:
                         $TMPDIR

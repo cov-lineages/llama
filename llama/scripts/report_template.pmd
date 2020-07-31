@@ -42,6 +42,22 @@ tree_dir = "" ##CHANGE
 input_name_column = "" ##CHANGE
 database_name_column = "" ##CHANGE
 
+
+colour_fields_input = "" ##CHANGE
+label_fields_input = "" ##CHANGE
+
+colour_fields = []
+if colour_fields_input != "NONE":
+    options = colour_fields_input.split(",")
+    for i in options: 
+        colour_fields.append(i)
+
+label_fields= []
+if label_fields_input != "NONE":
+    options = label_fields_input.split(",")
+    for i in options: 
+        label_fields.append(i)
+
 font_props = font_manager.FontProperties(family=["sans-serif"])
 a = matplotlib.font_manager.FontManager()
 a.findfont(font_props, fallback_to_default=True)
@@ -61,7 +77,7 @@ present_in_tree, tip_to_tree = dp.parse_tree_tips(tree_dir)
 query_dict, tree_to_tip = dp.parse_filtered_metadata(filtered_db_metadata, tip_to_tree) #Just the lines with their queries plus the closest match in db
 
 if input_csv != '':
-    query_dict = dp.parse_input_csv(input_csv, query_dict, input_name_column) #Any query information they have provided
+    query_dict = dp.parse_input_csv(input_csv, query_dict, input_name_column, colour_fields, label_fields) #Any query information they have provided
 
 full_tax_dict = dp.parse_full_metadata(query_dict, full_metadata_file, tip_to_tree, present_in_tree, database_name_column)
 ```
@@ -125,7 +141,7 @@ To get more information about individual lineages, click on the lineage name in 
 
 ```python, name="first_table", echo=False, results="tex"
 
-df = dp.make_initial_table(query_dict)
+df = dp.make_initial_table(query_dict, colour_fields, label_fields)
 
 print(df.to_markdown())
 ```
@@ -137,8 +153,23 @@ Underneath each tree is a bar chart summarising the lineages present.
 
 
 ```python, name="make_trees", echo=False, include=False, figure=False
-too_tall_trees, overall_tree_number, overall_df_dict = tree_viz.make_all_of_the_trees(tree_dir, full_tax_dict, query_dict)
+too_tall_trees, overall_tree_number, overall_df_dict, colour_dict_dict = tree_viz.make_all_of_the_trees(tree_dir, full_tax_dict, query_dict, colour_fields, label_fields)
 ``` 
+
+```python, name="make_legend", echo=False, include=False, results='tex'
+for trait, colour_dict in colour_dict_dict.items():
+    tree_viz.make_legend(colour_dict)
+    number_of_options = len(colour_dict)
+    if number_of_options > 15:
+        print("WARNING: There are more than 15 options to colour by for " + trait + ", which will make it difficult to see the differences between colours. Consider adding the trait to the taxon labels on the tree by using the flag _--label-fields_ when calling CIVET.")
+```
+```python,name="show_legend",echo=False,results='raw'
+for i, trait in enumerate(colour_dict_dict.keys()):
+    print("The legend for " + trait + " is shown below.\n")
+    print("![](" + figdir + "/" + name_stem + "_make_legend_" + str(i+1) + ".png)")
+    print("\n")
+```
+
 ```python, name="make_lineage_bars", echo=False, include=False, figure=False
 tree_to_lin_fig = tree_viz.describe_lineages(full_tax_dict)
 ```

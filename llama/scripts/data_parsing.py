@@ -26,6 +26,8 @@ class taxon():
 
         self.tree = "NA"
 
+        self.attribute_dict = {}
+
 
 def parse_filtered_metadata(metadata_file, tip_to_tree):
     
@@ -64,7 +66,7 @@ def parse_filtered_metadata(metadata_file, tip_to_tree):
             
     return query_dict, tree_to_tip
 
-def parse_input_csv(input_csv, query_dict, name_column):
+def parse_input_csv(input_csv, query_dict, name_column, colour_fields, label_fields):
 
     new_query_dict = {}
 
@@ -90,6 +92,13 @@ def parse_input_csv(input_csv, query_dict, name_column):
                 if "global_lineage" in col_names:
                     if taxon.global_lin == "NA" and sequence["global_lineage"] != "":
                         taxon.global_lin = sequence["global_lineage"]
+
+                for col in col_names: #Add other metadata fields provided
+                    if col != name_column and (col in colour_fields or col in label_fields) and col != "adm1":
+                        if sequence[col] == "":
+                            taxon.attribute_dict[col] = "NA"
+                        else:
+                            taxon.attribute_dict[col] = sequence[col]
 
                 
                 new_query_dict[taxon.name] = taxon
@@ -154,7 +163,7 @@ def parse_full_metadata(query_dict, full_metadata, tip_to_tree, present_in_tree,
     return full_tax_dict
     
 
-def make_initial_table(query_dict):
+def make_initial_table(query_dict, colour_fields, label_fields):
 
     df_dict = defaultdict(list)
 
@@ -174,6 +183,15 @@ def make_initial_table(query_dict):
             df_dict["Tree"].append(pretty_tree)
         else:
             df_dict["Tree"].append("NA") #this should never happen, it's more error catching
+
+        if colour_fields != []:
+            for i in colour_fields:
+                df_dict[i].append(query.attribute_dict[i])
+        
+        if label_fields != []:
+            for i in label_fields: 
+                if i not in colour_fields:
+                    df_dict[i].append(query.attribute_dict[i])
 
     df = pd.DataFrame(df_dict)
 
