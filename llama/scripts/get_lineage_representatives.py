@@ -53,7 +53,7 @@ def get_representatives():
                 lineage_seqs_with_ambiguities[lineage].append((record.id, amb_pcent))
 
     num = int(args.number)
-    with open(args.representative_metadata, "w") as fw:
+    with open(args.representatives, "w") as fw:
         for lineage in lineage_seqs_with_ambiguities:
             records = lineage_seqs_with_ambiguities[lineage]
             sorted_with_amb = sorted(records, key = lambda x : x[1])
