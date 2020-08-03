@@ -53,6 +53,9 @@ def main(sysargs = sys.argv[1:]):
     
     parser.add_argument('--distance', action="store",help="Extraction from large tree radius. Default: 2", dest="distance",default=2)
     parser.add_argument('--collapse-threshold', action='store',type=int,help="Minimum number of nodes to collapse on. Default: 1", dest="threshold", default=1)
+    parser.add_argument('--lineage-representatives', action="store_true",help="Include a selection of representative sequences from lineages present in the local tree. Default: False", dest="lineage_representatives")
+    parser.add_argument('--number-of-representatives', action="store",type=int,help="How many representative sequeneces per lineage to keep in the collapsed tree. Default: 5", default=5, dest="number_of_representatives")
+
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed to attempt analysis. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed to attempt analysis. Default: 10000",dest="minlen")
     
@@ -129,15 +132,12 @@ def main(sysargs = sys.argv[1:]):
         print(f"--no-temp: All intermediate files will be written to {outdir}")
         tempdir = outdir
 
-
-
     # how many threads to pass
     if args.threads:
         threads = args.threads
     else:
         threads = 1
     print(f"Number of threads: {threads}\n")
-
 
     # create the config dict to pass through to the snakemake file
     config = {
@@ -149,8 +149,14 @@ def main(sysargs = sys.argv[1:]):
         "rel_outdir":rel_outdir,
         "input_column":args.input_column,
         "data_column":args.data_column,
-        "force":"True"
+        "force":"True",
+        "number_of_representatives":args.number_of_representatives
         }
+
+    if args.lineage_representatives:
+        config["lineage_representatives"]=args.lineage_representatives
+    else:
+        config["lineage_representatives"]=False
 
     if args.query:
         # find the query csv, or string of ids
