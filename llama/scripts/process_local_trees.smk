@@ -269,7 +269,7 @@ rule prune_outgroup:
         --in-format newick \
         --out-format newick
         """
-
+       
 rule remove_str_for_baltic:
     input:
         tree = os.path.join(config["tempdir"],"outgroup_pruned","{tree}.newick")
