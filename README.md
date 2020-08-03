@@ -69,19 +69,16 @@ updates the conda environment
 ### Usage
 
 1. Activate the environment ``conda activate llama``
-2. Run ``llama <query> [options]``
+2. Run ``llama``
 
 Example usage:
-> ``llama llama/tests/test.csv --fasta llama/tests/test.fasta --datadir <path/to/data> ``
+> ``llama -i <input.csv> -f <input.fasta> -d <path/to/data> [options]``
 
 Full usage:
 ```
-llama: Local Lineage And Monophyly Assessment
+usage: llama -i <input.csv> -d <path/to/data> [options]
 
-positional arguments:
-  query                 Input csv file with minimally `name` as a column
-                        header. Alternatively, `--input-column` can specifiy a
-                        column name other than `name`
+llama: Local Lineage And Monophyly Assessment
 
 optional arguments:
   -h, --help            show this help message and exit
