@@ -44,52 +44,25 @@ rule get_lineage_represenatives:
         seqs = config["seqs"],
         tree_taxa = rules.extract_taxa_from_catchment.output.tree_taxa
     params:
-        data_column = config["data_column"]
+        data_column = config["data_column"],
+        lineage_representatives = config["lineage_representatives"],
+        number_of_representatives = config["number_of_representatives"]
     output:
         representative_metadata = os.path.join(config["tempdir"], "representative_lineage_taxa","{tree}.metadata.csv"),
     run:
-        taxa = []
-        with open(input.tree_taxa, "r") as f:
-            for l in f:
-                l = l.rstrip("\n")
-                taxa.append(l)
-        print(f"{len(taxa)} taxa read in")
-
-        lineages = collections.defaultdict(list)
-        with open(input.metadata,newline="") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row[params.data_column] in taxa:
-                    lineage = row["lineage"]
-                    lineages[lineage].append(row[params.data_column])
-        print(f"{len(lineages)} different lineages in local tree")
-        for lineage in sorted(lineages):
-            print(f"- {lineage}")
-
-        lineage_seqs_with_ambiguities = collections.defaultdict(list)
-        for record in SeqIO.parse(input.seqs,"fasta"):
-            for lineage in lineages:
-                if record.id in lineages[lineage]:
-                    amb_count = 0
-                    for base in record.seq:
-                        if base.upper() not in ["A","T","C","G","-"]:
-                            amb_count +=1
-                    amb_pcent = (100*amb_count) / len(record.seq)
-
-                    lineage_seqs_with_ambiguities[lineage].append((record.id, amb_pcent))
-
-        with open(output.representative_metadata, "w") as fw:
-            for lineage in lineage_seqs_with_ambiguities:
-                records = lineage_seqs_with_ambiguities[lineage]
-                sorted_with_amb = sorted(records, key = lambda x : x[1])
-                
-                if len(sorted_with_amb) > 10:
-                    top_ten_rep = sorted_with_amb[:10]
-                    for rep in top_ten_rep:
-                        fw.write(f"{rep[0]},{lineage}\n")
-                else:
-                    for rep in sorted_with_amb:
-                        fw.write(f"{rep[0]},{lineage}\n")
+        if params.lineage_representatives == True:
+            shell(
+            """
+            get_lineage_representatives.py \
+            --tree-taxa {input.tree_taxa} \
+            --seqs {input.seqs} \
+            --metadata {input.metadata} \
+            --data-column {params.data_column} \
+            --representatives {output.representative_metadata} \
+            --number-of-representatives {params.number_of_representatives}
+            """)
+        else:
+            shell("touch {output.representative_metadata}")
 
 rule combine_protected_metadata:
     input:

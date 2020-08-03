@@ -167,6 +167,8 @@ rule process_local_trees:
         path = workflow.current_basedir,
         threshold = config["threshold"],
         data_column = config["data_column"],
+        lineage_representatives = config["lineage_representatives"],
+        number_of_representatives = config["number_of_representatives"],
         fasta = config["fasta"],
         tree_dir = os.path.join(config["outdir"],"catchment_trees"),
 
@@ -200,6 +202,8 @@ rule process_local_trees:
                         "tempdir={params.tempdir:q} "
                         "outgroup_fasta={input.reference_fasta} "
                         "aligned_query_seqs={input.query_seqs:q} "
+                        "number_of_representatives={params.number_of_representatives} "
+                        "lineage_representatives={params.lineage_representatives} "
                         "metadata={input.metadata:q} "
                         "seqs={input.seqs:q} "
                         "data_column={params.data_column} "
@@ -218,6 +222,8 @@ rule process_local_trees:
                             "tempdir={params.tempdir:q} "
                             "outgroup_fasta={input.reference_fasta} "
                             "aligned_query_seqs={input.query_seqs:q} "
+                            "number_of_representatives={params.number_of_representatives} "
+                            "lineage_representatives={params.lineage_representatives} "
                             "metadata={input.metadata:q} "
                             "seqs={input.seqs:q} "
                             "data_column={params.data_column} "
