@@ -11,6 +11,7 @@
   * [Check the install worked](#check-the-install-worked)
   * [Updating llama](#updating-llama)
   * [Usage](#usage)
+  * [Options](#options)
   * [Analysis pipeline](#analysis-pipeline)
   * [Output](#output)
   * [Acknowledgements](#acknowledgements)
@@ -68,36 +69,51 @@ updates the conda environment
 ### Usage
 
 1. Activate the environment ``conda activate llama``
-2. Run ``llama <query> [options]``
+2. Run ``llama``
 
 Example usage:
-> ``llama llama/tests/test.csv --fasta llama/tests/test.fasta --datadir <path/to/data> ``
+> ``llama -i <input.csv> -f <input.fasta> -d <path/to/data> [options]``
 
 Full usage:
 ```
-llama: Local Lineage And Monophyly Assessment
+usage: llama -i <input.csv> -d <path/to/data> [options]
 
-positional arguments:
-  query                 Input csv file with minimally `name` as a column
-                        header. Alternatively, `--input-column` can specifiy a
-                        column name other than `name`
+llama: Local Lineage And Monophyly Assessment
 
 optional arguments:
   -h, --help            show this help message and exit
-  -i, --id-string       Indicates the input is a comma-separated id string
+  -i QUERY, --input QUERY
+                        Input csv file with minimally `name` as a column
+                        header. Alternatively, `--input-column` can specifiy a
+                        column name other than `name`
+  -f FASTA, --fasta FASTA
+                        Optional fasta query. Fasta sequence names must
+                        exactly match those in your input query.
+  -a, --align-sequences
+                        Just align sequences.
+  -s SEQS, --seqs SEQS  Sequence file containing sequences used to create the
+                        tree. For use in combination with the `--align-
+                        sequences` option.
+  -ns, --no-seqs        Alignment not available. Note, to work, all queries
+                        must already be in global tree.
+  -r, --report          Generate markdown report of input queries and their
+                        local trees
+  --colour-fields COLOUR_FIELDS
+                        Comma separated string of fields to colour by in the
+                        report.
+  --label-fields LABEL_FIELDS
+                        Comma separated string of fields to add to tree report
+                        labels.
+  --id-string           Indicates the input is a comma-separated id string
                         with one or more query ids. Example:
                         `EDB3588,EDB3589`.
-  --fasta FASTA         Optional fasta query. Fasta sequence names must
-                        exactly match those in your input query.
-  -o OUTDIR, 
-  --outdir OUTDIR
+  -o OUTDIR, --outdir OUTDIR
                         Output directory. Default: current working directory
-  --outgroup OUTGROUP   Optional outgroup sequence to root local subtrees.
-                        Default an anonymised sequence that is at the base of
-                        the global SARS-CoV-2 phylogeny.
-  -d DATADIR, 
-  --datadir DATADIR
+  -d DATADIR, --datadir DATADIR
                         Local directory that contains the data files
+  --tempdir TEMPDIR     Specify where you want the temp stuff to go. Default:
+                        $TMPDIR
+  --no-temp             Output all intermediate files, for dev purposes.
   --input-column INPUT_COLUMN
                         Column in input csv file to match with database.
                         Default: name
@@ -105,27 +121,45 @@ optional arguments:
                         Column in database to match with input csv file.
                         Default: sequence_name
   --distance DISTANCE   Extraction from large tree radius. Default: 2
-  -r, --report          Produces report that renders trees and provides information about 
-                        local phylogenetic context
-  --label-fields LABEL_FIELDS
-                        Adds custom fields to labels to tree tips in the report
-  --colour-fields COLOUR_FIELDS
-                        Colours tips in trees in report by specific fields to aid with
-                        cluster investigation
-  -n, --dry-run         Go through the motions but don't actually run
-  --tempdir TEMPDIR     Specify where you want the temp stuff to go. Default:
-                        $TMPDIR
-  --no-temp             Output all intermediate files, for dev purposes.
   --collapse-threshold THRESHOLD
                         Minimum number of nodes to collapse on. Default: 1
-  -t THREADS, --threads THREADS
-                        Number of threads
-  --verbose             Print lots of stuff to screen
+  --lineage-representatives
+                        Include a selection of representative sequences from
+                        lineages present in the local tree. Default: False
+  --number-of-representatives NUMBER_OF_REPRESENTATIVES
+                        How many representative sequeneces per lineage to keep
+                        in the collapsed tree. Default: 5
   --max-ambig MAXAMBIG  Maximum proportion of Ns allowed to attempt analysis.
                         Default: 0.5
   --min-length MINLEN   Minimum query length allowed to attempt analysis.
                         Default: 10000
+  -n, --dry-run         Go through the motions but don't actually run
+  -t THREADS, --threads THREADS
+                        Number of threads
+  --verbose             Print lots of stuff to screen
+  --outgroup OUTGROUP   Optional outgroup sequence to root local subtrees.
+                        Default an anonymised sequence that is at the base of
+                        the global SARS-CoV-2 phylogeny.
   -v, --version         show program's version number and exit
+```
+
+### Options
+
+Curate the input sequences into an alignment padded against an early lineage A reference:
+```
+llama -a -s your_input_sequences.fasta
+```
+
+Generate a report with your sequences summarised:
+```
+llama -r -i test.csv --fasta test.fasta --datadir <path/to/data>
+```
+
+Include a selection of representative sequences for each lineage present in the local tree:
+```
+llama -i test.csv --fasta test.fasta --datadir <path/to/data> \
+--lineage-representatives \
+--number-of-representatives 5
 ```
 
 ### Analysis pipeline

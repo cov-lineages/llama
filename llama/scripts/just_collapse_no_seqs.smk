@@ -29,70 +29,10 @@ rule all:
         os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
         expand(os.path.join(config["outdir"],"local_trees","{tree}.tree"), tree = config["tree_stems"])
 
-rule extract_taxa_from_catchment:
-    input:
-        catchment_tree = os.path.join(config["outdir"],"catchment_trees","{tree}.newick")
-    output:
-        tree_taxa = os.path.join(config["tempdir"], "catchment_trees","{tree}_taxon_names.txt")
-    run:
-        print(f"Extracting tax labels from local tree {input.catchment_tree}\n")
-        shell("clusterfunk get_taxa -i {input.catchment_tree} --in-format newick -o {output.tree_taxa} --out-format newick")
-
-rule get_lineage_represenatives:
-    input:
-        metadata = config["metadata"],
-        seqs = config["seqs"],
-        tree_taxa = rules.extract_taxa_from_catchment.output.tree_taxa
-    params:
-        data_column = config["data_column"],
-        lineage_representatives = config["lineage_representatives"],
-        number_of_representatives = config["number_of_representatives"]
-    output:
-        representative_metadata = os.path.join(config["tempdir"], "representative_lineage_taxa","{tree}.metadata.csv"),
-    run:
-        if params.lineage_representatives == True:
-            shell(
-            """
-            get_lineage_representatives.py \
-            --tree-taxa {input.tree_taxa} \
-            --seqs {input.seqs} \
-            --metadata {input.metadata} \
-            --data-column {params.data_column} \
-            --representatives {output.representative_metadata} \
-            --number-of-representatives {params.number_of_representatives}
-            """)
-        else:
-            shell("touch {output.representative_metadata}")
-
-rule combine_protected_metadata:
-    input:
-        lineage_reps = rules.get_lineage_represenatives.output.representative_metadata,
-        query_metadata = config["combined_metadata"]
-    output:
-        protected = os.path.join(config["tempdir"],"collapsed_trees","{tree}.protected.csv")
-    run:
-        with open(output.protected, "w") as fw:
-            fw.write("taxon,lineage\n")
-            taxa = []
-            with open(input.query_metadata,newline="") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    closest = row["closest"]
-                    lineage = row["lineage"]
-                    taxa.append(closest)
-                    fw.write(f"{closest},{lineage}\n")
-
-            with open(input.lineage_reps,"r") as f:
-                for l in f:
-                    l = l.rstrip("\n")
-                    taxon,lineage = l.split(',')
-                    if taxon not in taxa:
-                        fw.write(f"{l}\n")
-
 rule summarise_polytomies:
     input:
         tree = os.path.join(config["outdir"], "catchment_trees","{tree}.newick"),
-        metadata = rules.combine_protected_metadata.output.protected
+        metadata = config["combined_metadata"]
     params:
         tree_dir = os.path.join(config["outdir"],"catchment_trees"),
         threshold = config["threshold"]
@@ -104,7 +44,7 @@ rule summarise_polytomies:
         clusterfunk focus -i {input.tree:q} \
         -o {output.collapsed_tree:q} \
         --metadata {input.metadata:q} \
-        --index-column taxon \
+        --index-column closest \
         --in-format newick \
         --out-format newick \
         --threshold {params.threshold} \
