@@ -20,7 +20,7 @@ if config["qc_fail"] != "":
     config["qc_fail"] = f"--failed-seqs {fail_file}"
 
 ##### Target rules #####
-if config["report"] =="True":
+if config["report"] ==True:
     rule all:
         input:
             os.path.join(config["outdir"],"combined_metadata.csv"),
