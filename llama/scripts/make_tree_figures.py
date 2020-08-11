@@ -446,9 +446,12 @@ def summarise_node_table(tree_dir, focal_tree, full_tax_dict):
                     elem = country + " (" + str(count) + "), "
                     country_str += elem
                 
-
-            min_date = str(min(dates))
-            max_date = str(max(dates))
+            if dates != []:
+                min_date = str(min(dates))
+                max_date = str(max(dates))
+            else:
+                min_date = "NA"
+                max_date = "NA"
 
             size = len(member_list)
 
@@ -505,23 +508,31 @@ def describe_lineages(full_tax_dict):
 
     fig_count = 1
     tree_to_lin_fig = {}
-    for tree, counts in lineages_present.items():
-        
-        fig, ax = plt.subplots(1,1, figsize=(5,5), dpi=100)
-
-        x = list(counts.keys())
-        y = list(counts.values())
-
-        ax.bar(x,y)
-
-        ax.set_xticklabels(x, rotation=45)
-        ax.set_ylabel("Number of sequences")
-        ax.set_xlabel("Global lineage")
-        
-        tree_to_lin_fig[tree] = fig_count
-        fig_count += 1
     
-    return tree_to_lin_fig
+    for tree, counts in lineages_present.items():
+        if len(counts) > 2:
+
+            fig, ax = plt.subplots(1,1, figsize=(5,5), dpi=100)
+
+            if len(counts) <= 10:
+                x = list(counts.keys())
+                y = list(counts.values())
+            elif len(counts) > 10:
+                selected = dict(counts.most_common(10))
+                x = list(selected.keys())
+                y = list(selected.values())
+
+            ax.bar(x,y)
+
+            ax.set_xticklabels(x, rotation=45)
+            ax.set_ylabel("Number of sequences")
+            ax.set_xlabel("Global lineage")
+            
+            tree_to_lin_fig[tree] = fig_count
+            fig_count += 1
+
+
+    return tree_to_lin_fig, lineages_present
     
 
 
