@@ -135,7 +135,8 @@ def main(sysargs = sys.argv[1:]):
         "data_column":args.data_column,
         "force":"True",
         "threshold":args.threshold,
-        "number_of_representatives":args.number_of_representatives
+        "number_of_representatives":args.number_of_representatives,
+        "distance":args.distance
         }
 
     if args.lineage_representatives:
@@ -222,15 +223,15 @@ def main(sysargs = sys.argv[1:]):
     # accessing package data and adding to config dict
     qcfunk.get_outgroup_sequence(args.outgroup, cwd, config)
 
-    if args.distance:
-        try:
-            distance = int(args.distance) 
-            config["distance"] = args.distance
-        except:
-            sys.stderr.write(qcfunk.cyan('Error: distance must be an integer\n'))
-            sys.exit(-1)
-    else:
-        config["distance"] = "1"
+    # if args.distance:
+    #     try:
+    #         distance = int(args.distance) 
+    #         config["distance"] = args.distance
+    #     except:
+    #         sys.stderr.write(qcfunk.cyan('Error: distance must be an integer\n'))
+    #         sys.exit(-1)
+    # else:
+    #     config["distance"] = "1"
 
     if args.report:
         config["report"] = True
