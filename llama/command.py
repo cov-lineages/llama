@@ -7,7 +7,7 @@ import snakemake
 import sys
 from tempfile import gettempdir
 import tempfile
-import input_qc_functions as misc
+import input_qc_functions as qcfunk
 import pprint
 import json
 import csv
@@ -76,16 +76,16 @@ def main(sysargs = sys.argv[1:]):
         args = parser.parse_args(sysargs)
 
     # find the Snakefile (either master, no-seq snakefile or alignment snakefile)
-    snakefile = misc.get_snakefile(args.no_seqs,args.align,thisdir)
+    snakefile = qcfunk.get_snakefile(args.no_seqs,args.align,thisdir)
     
     # find the query fasta
     if args.fasta:
         if args.no_seqs:
-            sys.stderr.write(misc.cyan(f"Error: can't supply a fasta file if no supporting alignment\nEither provide a data directory with an alignment or just query sequences in the tree\n"))
+            sys.stderr.write(qcfunk.cyan(f"Error: can't supply a fasta file if no supporting alignment\nEither provide a data directory with an alignment or just query sequences in the tree\n"))
             sys.exit(-1)
         fasta = os.path.join(cwd, args.fasta)
         if not os.path.exists(fasta):
-            sys.stderr.write(misc.cyan(f'Error: cannot find fasta query at {fasta}\n'))
+            sys.stderr.write(qcfunk.cyan(f'Error: cannot find fasta query at {fasta}\n'))
             sys.exit(-1)
         else:
             print(f"Input fasta file: {fasta}")
@@ -115,7 +115,7 @@ def main(sysargs = sys.argv[1:]):
         print(f"--no-temp: All intermediate files will be written to {outdir}")
         tempdir = outdir
     else:
-        tempdir = misc.get_temp_dir(args.tempdir, cwd)
+        tempdir = qcfunk.get_temp_dir(args.tempdir, cwd)
 
     # how many threads to pass
     if args.threads:
@@ -134,6 +134,7 @@ def main(sysargs = sys.argv[1:]):
         "rel_outdir":rel_outdir,
         "data_column":args.data_column,
         "force":"True",
+        "threshold":args.threshold,
         "number_of_representatives":args.number_of_representatives
         }
 
@@ -147,23 +148,14 @@ def main(sysargs = sys.argv[1:]):
     metadata,seqs,tree = ("","","")
     if not args.align:
         if args.datadir:
-            metadata,seqs,tree = misc.check_data_dir(args.datadir,args.no_seqs,cwd,config)
-
+            metadata,seqs,tree = qcfunk.check_data_dir(args.datadir,args.no_seqs,cwd,config)
         else:
-            sys.stderr.write(misc.cyan("No data directory specified, please specify where to find the data files\n"))
+            sys.stderr.write(qcfunk.cyan("No data directory specified, please specify where to find the data files\n"))
             sys.exit(-1)
+
     elif args.align:
-        if not args.seqs:
-            sys.stderr.write(misc.cyan(f"""Error: please input fasta file for alignment\n"""))
-            sys.exit(-1)
-        else:
-            seqs = os.path.join(cwd, args.seqs)
-
-        if not os.path.exists(seqs):
-            sys.stderr.write(misc.cyan(f"""Error: cannot find sequence file at {seqs}\n"""))
-            sys.exit(-1)
-        else:
-            config["seqs"] = seqs
+        seqs = qcfunk.get_seqs_for_aln(args.seqs,cwd)
+        config["seqs"] = seqs
 
     if not args.align:
         # parse the input db, check col headers
@@ -171,113 +163,71 @@ def main(sysargs = sys.argv[1:]):
             reader = csv.DictReader(f)
             column_names = reader.fieldnames
             if args.data_column not in column_names:
-                sys.stderr.write(misc.cyan(f"Error: Metadata file missing header field {args.data_column}\nEither specifiy `--data-column` or supply a column with header `sequence_name`\n"))
+                sys.stderr.write(qcfunk.cyan(f"Error: Metadata file missing header field {args.data_column}\nEither specifiy `--data-column` or supply a column with header `sequence_name`\n"))
                 sys.exit(-1)
 
-    if args.from_metadata and args.query:
-        sys.stderr.write(misc.cyan(f"Error: Please provide either an input query file (`-i`) or define some search criteria from the metadata (`-fm`)\n"))
-        sys.exit(-1)
-    
-    elif args.from_metadata:
-        query = misc.parse_from_metadata_arg(metadata, args.from_metadata, args.data_column, config)
-
-    elif args.query:
-        # find the query csv, or string of ids
-        query = os.path.join(cwd, args.query)
+        if args.from_metadata and args.query:
+            sys.stderr.write(qcfunk.cyan(f"Error: Please provide either an input query file (`-i`) or define some search criteria from the metadata (`-fm`)\n"))
+            sys.exit(-1)
         
-        if not os.path.exists(query):
-            if args.ids:
-                id_list = args.query.split(",")
-                query = os.path.join(tempdir, "query.csv")
-                with open(query,"w") as fw:
-                    fw.write(f"{args.input_column}\n")
-                    for i in id_list:
-                        fw.write(i+'\n')
-            else:
-                sys.stderr.write(misc.cyan(f"Error: cannot find query file at {query}\nCheck if the file exists, or if you're inputting an id string (e.g. EPI12345,EPI23456), please use in conjunction with the `--id-string` flag\n."))
-                sys.exit(-1)
-        else:
-            print(f"Input file: {query}")
+        elif args.from_metadata:
+            query = qcfunk.parse_from_metadata_arg(metadata, args.from_metadata, args.data_column, config)
+
+        elif args.query:
+            # find the query csv, or string of ids
+            query = os.path.join(cwd, args.query)
             
-        config["query"] = query
-        config["input_column"] = args.input_column
-    else:
-        sys.stderr.write(misc.cyan(f"Error: please input a query (`-i`) or define a search (`-fm`)\n"))
-        sys.exit(-1)
-    # parse the input csv, check col headers
+            if not os.path.exists(query):
+                if args.ids:
+                    id_list = args.query.split(",")
+                    query = os.path.join(tempdir, "query.csv")
+                    with open(query,"w") as fw:
+                        fw.write(f"{args.input_column}\n")
+                        for i in id_list:
+                            fw.write(i+'\n')
+                else:
+                    sys.stderr.write(qcfunk.cyan(f"Error: cannot find query file at {query}\nCheck if the file exists, or if you're inputting an id string (e.g. EPI12345,EPI23456), please use in conjunction with the `--id-string` flag\n."))
+                    sys.exit(-1)
+            else:
+                print(f"Input file: {query}")
+                
+            config["query"] = query
+            config["input_column"] = args.input_column
+        else:
+            sys.stderr.write(qcfunk.cyan(f"Error: please input a query (`-i`) or define a search (`-fm`)\n"))
+            sys.exit(-1)
+        # parse the input csv, check col headers
 
     
-    if args.query:
-        input_column = args.input_column
-    else:
-        input_column = args.data_column
+        if args.query:
+            input_column = args.input_column
+        else:
+            input_column = args.data_column
 
-    misc.check_label_and_colour_fields(query, args.query, args.colour_fields, args.label_fields, input_column, config)
+        qcfunk.check_label_and_colour_fields(query, args.query, args.colour_fields, args.label_fields, input_column, config)
 
-    """ 
-    QC steps:
-    1) check csv header
-    2) check fasta file N content
-    3) write a file that contains just the seqs to run
-    """
 
-    # run qc on the input sequence file
     if args.fasta:
-        misc.input_file_qc(args.fasta,args.minlen,args.maxambig,config)
-        # do_not_run = []
-        # run = []
-        # for record in SeqIO.parse(args.fasta, "fasta"):
-        #     if len(record) <args.minlen:
-        #         record.description = record.description + f" fail=seq_len:{len(record)}"
-        #         do_not_run.append(record)
-        #         print(misc.cyan(f"    - {record.id}\tsequence too short: Sequence length {len(record)}"))
-        #     else:
-        #         num_N = str(record.seq).upper().count("N")
-        #         prop_N = round((num_N)/len(record.seq), 2)
-        #         if prop_N > args.maxambig: 
-        #             record.description = record.description + f" fail=N_content:{prop_N}"
-        #             do_not_run.append(record)
-        #             print(misc.cyan(f"    - {record.id}\thas an N content of {prop_N}"))
-        #         else:
-        #             run.append(record)
-
-        # post_qc_query = os.path.join(outdir, 'query.post_qc.fasta')
-        # with open(post_qc_query,"w") as fw:
-        #     SeqIO.write(run, fw, "fasta")
-        # qc_fail = os.path.join(outdir,'query.failed_qc.csv')
-        # with open(qc_fail,"w") as fw:
-        #     fw.write("name,reason_for_failure\n")
-        #     for record in do_not_run:
-        #         desc = record.description.split(" ")
-        #         for i in desc:
-        #             if i.startswith("fail="):
-        #                 fw.write(f"{record.id},{i}\n")
-
-        # config["post_qc_query"] = post_qc_query
-        # config["qc_fail"] = qc_fail
+        """ 
+        QC steps:
+        1) check csv header
+        2) check fasta file N content
+        3) write a file that contains just the seqs to run
+        """
+        qcfunk.input_file_qc(args.fasta,args.minlen,args.maxambig,config)
     else:
         config["post_qc_query"] = ""
         config["qc_fail"] = ""
 
-
     # accessing package data and adding to config dict
-    if args.outgroup:
-        reference_fasta = os.path.join(cwd, args.outgroup)
-        if not os.path.isfile(reference_fasta):
-            sys.stderr.write(misc.cyan(f"""Error: cannot find specified outgroup file at {args.outgroup}"""))
-            sys.exit(-1)
-        else:
-            config["reference_fasta"] = reference_fasta
-    else:
-        reference_fasta = pkg_resources.resource_filename('llama', 'data/reference.fasta')
-        config["reference_fasta"] = reference_fasta
+    qcfunk.get_outgroup_sequence(args.outgroup, cwd, config)
 
     if args.distance:
         try:
             distance = int(args.distance) 
             config["distance"] = args.distance
         except:
-            sys.stderr.write(misc.cyan('Error: distance must be an integer\n'))
+            sys.stderr.write(qcfunk.cyan('Error: distance must be an integer\n'))
             sys.exit(-1)
     else:
         config["distance"] = "1"
@@ -290,18 +240,6 @@ def main(sysargs = sys.argv[1:]):
     config["report_template"] =  os.path.join(thisdir, 'scripts','report_template.pmd')
     footer_fig = pkg_resources.resource_filename('llama', 'data/footer.png')
     config["footer"] = footer_fig
-    
-
-    # collapse threshold, defaults to 1 if nothing else supplied
-    if args.threshold:
-        try:
-            threshold = int(args.threshold)
-            config["threshold"] = args.threshold
-        except:
-            sys.stderr.write(misc.cyan('Error: threshold must be an integer\n'))
-            sys.exit(-1)
-    else:
-        config["threshold"] = "1"
 
     # don't run in quiet mode if verbose specified
     if args.verbose:
