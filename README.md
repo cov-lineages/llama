@@ -160,7 +160,13 @@ Generate a report with your sequences summarised:
 llama -r -i test.csv -f test.fasta -d <path/to/data>
 ```
 
-Generate a report with a custom set of sequences defined by the metadata file supplied. The following command will pull out sequences from Ireland with samples between 2020-03-01 and 2020-04-1, provided that information exists in the data directory.
+Generate a report with a custom set of sequences defined by the metadata file supplied. After the `-fm` or `--from-metadata` argument, one or more columns in the metadata and search pattern to match can be described. A special case exists if a date range is detected (colon separated dates). The required date format is YYYY-MM-DD. 
+The format of this search is as follows:
+```
+--from-metadata column1=value1 column2=YYYY-MM-DD:YYYY-MM-DD
+```
+
+For example, the following command will pull out sequences from Ireland with samples between 2020-03-01 and 2020-04-1, provided that information exists metadata.csv file found in the data directory.
 ```
 llama -r -fm country=Ireland sample_date=2020-03-01:2020-04-01 -d <path/to/data>
 ```
