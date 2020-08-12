@@ -75,17 +75,8 @@ def main(sysargs = sys.argv[1:]):
     else:
         args = parser.parse_args(sysargs)
 
-    # find the master Snakefile
-
-    if args.no_seqs:
-        snakefile = os.path.join(thisdir, 'scripts', 'no_seqs_snakefile.smk')
-    elif args.align:
-        snakefile = os.path.join(thisdir, 'scripts', 'curate_alignment.smk')
-    else:
-        snakefile = os.path.join(thisdir, 'scripts','Snakefile')
-    if not os.path.exists(snakefile):
-        sys.stderr.write(misc.cyan(f'Error: cannot find Snakefile at {snakefile}\n Check installation'))
-        sys.exit(-1)
+    # find the Snakefile (either master, no-seq snakefile or alignment snakefile)
+    snakefile = misc.get_snakefile(args.no_seqs,args.align,thisdir)
     
     # find the query fasta
     if args.fasta:
@@ -118,22 +109,13 @@ def main(sysargs = sys.argv[1:]):
     
     print(f"Output files will be written to {outdir}\n")
 
-    # specifying temp directory
-    tempdir = ''
-    if args.tempdir:
-        to_be_dir = os.path.join(cwd, args.tempdir)
-        if not os.path.exists(to_be_dir):
-            os.mkdir(to_be_dir)
-        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=to_be_dir)
-        tempdir = temporary_directory.name
-    else:
-        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None)
-        tempdir = temporary_directory.name
-
+    
     # if no temp, just write everything to outdir
     if args.no_temp:
         print(f"--no-temp: All intermediate files will be written to {outdir}")
         tempdir = outdir
+    else:
+        tempdir = misc.get_temp_dir(args.tempdir, cwd)
 
     # how many threads to pass
     if args.threads:
@@ -166,55 +148,19 @@ def main(sysargs = sys.argv[1:]):
     if not args.align:
         if args.datadir:
             metadata,seqs,tree = misc.check_data_dir(args.datadir,args.no_seqs,cwd,config)
-            # data_dir = os.path.join(cwd, args.datadir)
-            
-            # seqs = os.path.join(data_dir,"alignment.fasta")
-            
-            # metadata = os.path.join(data_dir,"metadata.csv")
 
-            # tree = os.path.join(data_dir,"global.tree")
-            # if args.no_seqs:
-            #     if not os.path.isfile(metadata) or not os.path.isfile(tree):
-            #         sys.stderr.write(misc.cyan(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
-            # - global.tree\n\
-            # - metadata.csv\n"""))
-            #         sys.exit(-1)
-            #     else:
-            #         config["metadata"] = metadata
-            #         config["tree"] = tree
-
-            #         print("Found data:")
-            #         print("    -",metadata)
-            #         print("    -",tree,"\n")
-
-            # else:
-            #     if not os.path.isfile(seqs) or not os.path.isfile(metadata) or not os.path.isfile(tree):
-            #         sys.stderr.write(misc.cyan(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
-            # - alignment.fasta\n\
-            # - global.tree\n\
-            # - metadata.csv\n"""))
-            #         sys.exit(-1)
-            #     else:
-            #         config["seqs"] = seqs
-            #         config["metadata"] = metadata
-            #         config["tree"] = tree
-
-            #         print("Found data:")
-            #         print("    -",seqs)
-            #         print("    -",metadata)
-            #         print("    -",tree,"\n")
         else:
             sys.stderr.write(misc.cyan("No data directory specified, please specify where to find the data files\n"))
             sys.exit(-1)
     elif args.align:
         if not args.seqs:
-            sys.stderr.write(misc.cyan(f"""Error: please input fasta file for alignment"""))
+            sys.stderr.write(misc.cyan(f"""Error: please input fasta file for alignment\n"""))
             sys.exit(-1)
         else:
             seqs = os.path.join(cwd, args.seqs)
 
         if not os.path.exists(seqs):
-            sys.stderr.write(misc.cyan(f"""Error: cannot find sequence file at {seqs}"""))
+            sys.stderr.write(misc.cyan(f"""Error: cannot find sequence file at {seqs}\n"""))
             sys.exit(-1)
         else:
             config["seqs"] = seqs

@@ -5,6 +5,8 @@ import datetime
 import sys
 from Bio import SeqIO
 from datetime import datetime 
+from tempfile import gettempdir
+import tempfile
 
 END_FORMATTING = '\033[0m'
 BOLD = '\033[1m'
@@ -58,6 +60,33 @@ def yellow(text):
 def bold_underline(text):
     return BOLD + UNDERLINE + text + END_FORMATTING
 
+
+
+def get_snakefile(no_seqs,align,thisdir):
+    if no_seqs:
+        snakefile = os.path.join(thisdir, 'scripts', 'no_seqs_snakefile.smk')
+    elif align:
+        snakefile = os.path.join(thisdir, 'scripts', 'curate_alignment.smk')
+    else:
+        snakefile = os.path.join(thisdir, 'scripts','Snakefile')
+    if not os.path.exists(snakefile):
+        sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}\n Check installation'))
+        sys.exit(-1)
+    return snakefile
+
+
+def get_temp_dir(tempdir_arg, cwd):
+    tempdir = ''
+    if tempdir_arg:
+        to_be_dir = os.path.join(cwd, tempdir_arg)
+        if not os.path.exists(to_be_dir):
+            os.mkdir(to_be_dir)
+        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=to_be_dir)
+        tempdir = temporary_directory.name
+    else:
+        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None)
+        tempdir = temporary_directory.name
+    return tempdir
 
 def check_data_dir(datadir,no_seqs,cwd,config):
     data_dir = os.path.join(cwd, datadir)
