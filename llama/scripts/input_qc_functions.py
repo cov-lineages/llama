@@ -99,6 +99,37 @@ def get_outgroup_sequence(outgroup_arg, cwd, config):
         reference_fasta = pkg_resources.resource_filename('llama', 'data/reference.fasta')
         config["reference_fasta"] = reference_fasta
 
+def get_query_fasta(fasta_arg,no_seqs_arg,cwd):
+    if fasta_arg:
+        if no_seqs_arg:
+            sys.stderr.write(cyan(f"Error: can't supply a fasta file if no supporting alignment\nEither provide a data directory with an alignment or just query sequences in the tree\n"))
+            sys.exit(-1)
+        fasta = os.path.join(cwd, fasta_arg)
+        if not os.path.exists(fasta):
+            sys.stderr.write(cyan(f'Error: cannot find fasta query at {fasta}\n'))
+            sys.exit(-1)
+        else:
+            print(f"Input fasta file: {fasta}")
+    else:
+        fasta = ""
+    return fasta
+
+def get_outdir(outdir_arg,cwd):
+    outdir = ''
+    if outdir_arg:
+        rel_outdir = outdir_arg #for report weaving
+        outdir = os.path.join(cwd, outdir_arg)
+        
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+    else:
+        timestamp = str(datetime.now().isoformat(timespec='milliseconds')).replace(":","").replace(".","").replace("T","-")
+        outdir = os.path.join(cwd, timestamp)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+        rel_outdir = os.path.join(".",timestamp)
+    return outdir, rel_outdir
+        
 def get_temp_dir(tempdir_arg, cwd):
     tempdir = ''
     if tempdir_arg:

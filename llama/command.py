@@ -54,7 +54,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--input-column', action="store",help="Column in input csv file to match with database. Default: name", dest="input_column",default="name")
     parser.add_argument('--data-column', action="store",help="Column in database to match with input csv file. Default: sequence_name", dest="data_column",default="sequence_name")
     
-    parser.add_argument('--distance', action="store",help="Extraction from large tree radius. Default: 2", dest="distance",default=2)
+    parser.add_argument('--distance', action="store",type=int,help="Extraction from large tree radius. Default: 2", dest="distance",default=2)
     parser.add_argument('--collapse-threshold', action='store',type=int,help="Minimum number of nodes to collapse on. Default: 1", dest="threshold", default=1)
     parser.add_argument('--lineage-representatives', action="store_true",help="Include a selection of representative sequences from lineages present in the local tree. Default: False", dest="lineage_representatives")
     parser.add_argument('--number-of-representatives', action="store",type=int,help="How many representative sequeneces per lineage to keep in the collapsed tree. Default: 5", default=5, dest="number_of_representatives")
@@ -79,34 +79,11 @@ def main(sysargs = sys.argv[1:]):
     snakefile = qcfunk.get_snakefile(args.no_seqs,args.align,thisdir)
     
     # find the query fasta
-    if args.fasta:
-        if args.no_seqs:
-            sys.stderr.write(qcfunk.cyan(f"Error: can't supply a fasta file if no supporting alignment\nEither provide a data directory with an alignment or just query sequences in the tree\n"))
-            sys.exit(-1)
-        fasta = os.path.join(cwd, args.fasta)
-        if not os.path.exists(fasta):
-            sys.stderr.write(qcfunk.cyan(f'Error: cannot find fasta query at {fasta}\n'))
-            sys.exit(-1)
-        else:
-            print(f"Input fasta file: {fasta}")
-    else:
-        fasta = ""
+    fasta = qcfunk.get_query_fasta(args.fasta,args.no_seqs,cwd)
 
     # default output dir
-    outdir = ''
-    if args.outdir:
-        rel_outdir = args.outdir #for report weaving
-        outdir = os.path.join(cwd, args.outdir)
-        
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
-    else:
-        timestamp = str(datetime.now().isoformat(timespec='milliseconds')).replace(":","").replace(".","").replace("T","-")
-        outdir = os.path.join(cwd, timestamp)
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
-        rel_outdir = os.path.join(".",timestamp)
-    
+    outdir,rel_outdir = qcfunk.get_outdir(args.outdir,cwd)
+
     print(f"Output files will be written to {outdir}\n")
 
     
@@ -199,7 +176,6 @@ def main(sysargs = sys.argv[1:]):
             sys.exit(-1)
         # parse the input csv, check col headers
 
-    
         if args.query:
             input_column = args.input_column
         else:
@@ -222,16 +198,6 @@ def main(sysargs = sys.argv[1:]):
 
     # accessing package data and adding to config dict
     qcfunk.get_outgroup_sequence(args.outgroup, cwd, config)
-
-    # if args.distance:
-    #     try:
-    #         distance = int(args.distance) 
-    #         config["distance"] = args.distance
-    #     except:
-    #         sys.stderr.write(qcfunk.cyan('Error: distance must be an integer\n'))
-    #         sys.exit(-1)
-    # else:
-    #     config["distance"] = "1"
 
     if args.report:
         config["report"] = True
