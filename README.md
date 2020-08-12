@@ -86,6 +86,11 @@ optional arguments:
                         Input csv file with minimally `name` as a column
                         header. Alternatively, `--input-column` can specifiy a
                         column name other than `name`
+  -fm [FROM_METADATA [FROM_METADATA ...]], --from-metadata [FROM_METADATA [FROM_METADATA ...]]
+                        Generate a query from the metadata file supplied.
+                        Define a search that will be used to pull out
+                        sequences of interest from the large phylogeny. E.g.
+                        -fm country=Ireland sample_date=2020-03-01:2020-04-01
   -f FASTA, --fasta FASTA
                         Optional fasta query. Fasta sequence names must
                         exactly match those in your input query.
@@ -152,7 +157,12 @@ llama -a -s your_input_sequences.fasta
 
 Generate a report with your sequences summarised:
 ```
-llama -r -i test.csv --fasta test.fasta --datadir <path/to/data>
+llama -r -i test.csv -f test.fasta -d <path/to/data>
+```
+
+Generate a report with a custom set of sequences defined by the metadata file supplied. The following command will pull out sequences from Ireland with samples between 2020-03-01 and 2020-04-1, provided that information exists in the data directory.
+```
+llama -r -fm country=Ireland sample_date=2020-03-01:2020-04-01 -d <path/to/data>
 ```
 
 Include a selection of representative sequences for each lineage present in the local tree:
