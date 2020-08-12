@@ -63,7 +63,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed to attempt analysis. Default: 10000",dest="minlen")
     
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
-    parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
+    parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads",default=1)
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument("--outgroup",action="store",help="Optional outgroup sequence to root local subtrees. Default an anonymised sequence that is at the base of the global SARS-CoV-2 phylogeny.")
     parser.add_argument("-v","--version", action='version', version=f"llama {__version__}")
@@ -83,9 +83,6 @@ def main(sysargs = sys.argv[1:]):
 
     # default output dir
     outdir,rel_outdir = qcfunk.get_outdir(args.outdir,cwd)
-
-    print(f"Output files will be written to {outdir}\n")
-
     
     # if no temp, just write everything to outdir
     if args.no_temp:
@@ -93,13 +90,6 @@ def main(sysargs = sys.argv[1:]):
         tempdir = outdir
     else:
         tempdir = qcfunk.get_temp_dir(args.tempdir, cwd)
-
-    # how many threads to pass
-    if args.threads:
-        threads = args.threads
-    else:
-        threads = 1
-    print(f"Number of threads: {threads}\n")
 
     # create the config dict to pass through to the snakemake file
     config = {
@@ -154,23 +144,12 @@ def main(sysargs = sys.argv[1:]):
         elif args.query:
             # find the query csv, or string of ids
             query = os.path.join(cwd, args.query)
-            
-            if not os.path.exists(query):
-                if args.ids:
-                    id_list = args.query.split(",")
-                    query = os.path.join(tempdir, "query.csv")
-                    with open(query,"w") as fw:
-                        fw.write(f"{args.input_column}\n")
-                        for i in id_list:
-                            fw.write(i+'\n')
-                else:
-                    sys.stderr.write(qcfunk.cyan(f"Error: cannot find query file at {query}\nCheck if the file exists, or if you're inputting an id string (e.g. EPI12345,EPI23456), please use in conjunction with the `--id-string` flag\n."))
-                    sys.exit(-1)
-            else:
-                print(f"Input file: {query}")
-                
-            config["query"] = query
+
             config["input_column"] = args.input_column
+
+            query = qcfunk.parse_input_query(args.query, args.ids, cwd, config)
+
+            config["query"] = query
         else:
             sys.stderr.write(qcfunk.cyan(f"Error: please input a query (`-i`) or define a search (`-fm`)\n"))
             sys.exit(-1)
@@ -215,6 +194,10 @@ def main(sysargs = sys.argv[1:]):
     else:
         quiet_mode = True
         config["quiet_mode"]=True
+
+    # how many threads to pass
+    threads = args.threads
+    print(qcfunk.green(f"Number of threads:") + f" {threads}\n")
 
     status = snakemake.snakemake(snakefile, printshellcmds=True,
                                  dryrun=args.dry_run, forceall=True,force_incomplete=True,workdir=tempdir,

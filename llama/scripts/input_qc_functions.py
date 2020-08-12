@@ -53,10 +53,11 @@ def red(text):
 def cyan(text):
     return CYAN + text + END_FORMATTING
 
+def green(text):
+    return GREEN + text + END_FORMATTING
 
 def yellow(text):
     return YELLOW + text + END_FORMATTING
-
 
 def bold_underline(text):
     return BOLD + UNDERLINE + text + END_FORMATTING
@@ -109,7 +110,7 @@ def get_query_fasta(fasta_arg,no_seqs_arg,cwd):
             sys.stderr.write(cyan(f'Error: cannot find fasta query at {fasta}\n'))
             sys.exit(-1)
         else:
-            print(f"Input fasta file: {fasta}")
+            print(green(f"Input fasta file:") + f" {fasta}")
     else:
         fasta = ""
     return fasta
@@ -128,6 +129,7 @@ def get_outdir(outdir_arg,cwd):
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         rel_outdir = os.path.join(".",timestamp)
+    print(green(f"Output dir:") + f" {outdir}")
     return outdir, rel_outdir
         
 def get_temp_dir(tempdir_arg, cwd):
@@ -161,10 +163,7 @@ def check_data_dir(datadir,no_seqs,cwd,config):
             config["metadata"] = metadata
             config["tree"] = tree
             seqs = ""
-            print("Found data:")
-            print("    -",metadata)
-            print("    -",tree,"\n")
-
+            print(green("Found input data files:") + f"\n - {metadata}\n - {tree}")
     else:
         if not os.path.isfile(seqs) or not os.path.isfile(metadata) or not os.path.isfile(tree):
             sys.stderr.write(cyan(f"""Error: cannot find correct data files at {data_dir}\nThe directory should contain the following files:\n\
@@ -177,10 +176,7 @@ def check_data_dir(datadir,no_seqs,cwd,config):
             config["metadata"] = metadata
             config["tree"] = tree
 
-            print("Found data:")
-            print("    -",seqs)
-            print("    -",metadata)
-            print("    -",tree,"\n")
+            print(green("Found input data files:") + f" - {seqs}\n - {metadata}\n - {tree}")
     return metadata,seqs,tree
 
 def parse_from_metadata_arg(metadata, from_metadata, data_column, config):
@@ -274,12 +270,32 @@ Columns that were found:\n{cols}"""))
         if count == 0:
             sys.stderr.write(cyan(f"Error: No sequences meet the criteria defined with `--from-metadata`.\nExiting\n"))
             sys.exit(-1)
-        print(f"Number of sequences matching defined query: {count}")
+        print(green(f"Number of sequences matching defined query:") + f" {count}")
         if len(query_ids) < 100:
             for i in query_ids:
                 print(f" - {i}")
     config["query"] = query
     return query
+
+def parse_input_query(query_arg,ids_arg,cwd,config):
+    query = os.path.join(cwd,query_arg)
+            
+    if not os.path.exists(query):
+        if id_args:
+            id_list = query_arg.split(",")
+            query = os.path.join(config["tempdir"], "query.csv")
+            with open(query,"w") as fw:
+                in_col = config["input_column"]
+                fw.write(f"{in_col}\n")
+                for i in id_list:
+                    fw.write(i+'\n')
+        else:
+            sys.stderr.write(cyan(f"Error: cannot find query file at {query}\nCheck if the file exists, or if you're inputting an id string (e.g. EPI12345,EPI23456), please use in conjunction with the `--id-string` flag\n."))
+            sys.exit(-1)
+
+    print(green(f"Input file:") + f" {query}")
+    return query
+        
 
 def check_label_and_colour_fields(query_file, query_arg, colour_fields, label_fields, input_column, config):
     queries = []
@@ -293,13 +309,12 @@ def check_label_and_colour_fields(query_file, query_arg, colour_fields, label_fi
             sys.exit(-1)
 
         if query_arg:
-            print("Input querys to process:")
+            print(green("Input querys to process:"))
             queries = []
             for row in reader:
                 queries.append(row[input_column])
                 print(f" - {row[input_column]}")
-
-            print(f"Number of queries: {len(queries)}")
+            print(green(f"Number of queries:") + f" {len(queries)}")
 
         if not colour_fields:
             colour_field_list.append("NONE")
