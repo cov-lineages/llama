@@ -171,7 +171,7 @@ for i, trait in enumerate(colour_dict_dict.keys()):
 ```
 
 ```python, name="make_lineage_bars", echo=False, include=False, figure=False
-tree_to_lin_fig = tree_viz.describe_lineages(full_tax_dict)
+tree_to_lin_fig, lineages_present = tree_viz.describe_lineages(full_tax_dict)
 ```
 
 ```python, name="show_trees", echo=False, results='raw'
@@ -188,7 +188,12 @@ tree_to_lin_fig = tree_viz.describe_lineages(full_tax_dict)
         print("![](" + figdir + "/" + name_stem + "_make_trees_" + str(i) + ".png)")
 
         print("#### Lineage summary")
-        print("![](" + figdir + "/" + name_stem + "_make_lineage_bars_" + str(tree_to_lin_fig[lookup]) + ".png)")
+        if len(lineages_present[lookup]) > 2:
+            print("![](" + figdir + "/" + name_stem + "_make_lineage_bars_" + str(tree_to_lin_fig[lookup]) + ".png)")
+        else:
+            lins = lineages_present[lookup]
+            for i,v in lins.items():
+                print(" - " + str(i) + " (" + str(v) + " sequences)") 
 
 ```
 
