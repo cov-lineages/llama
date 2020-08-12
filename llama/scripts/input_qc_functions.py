@@ -7,6 +7,7 @@ from Bio import SeqIO
 from datetime import datetime 
 from tempfile import gettempdir
 import tempfile
+import pkg_resources
 
 END_FORMATTING = '\033[0m'
 BOLD = '\033[1m'
@@ -74,6 +75,29 @@ def get_snakefile(no_seqs,align,thisdir):
         sys.exit(-1)
     return snakefile
 
+def get_seqs_for_aln(seqs_arg,cwd):
+    if not seqs_arg:
+        sys.stderr.write(cyan(f"""Error: please input fasta file for alignment\n"""))
+        sys.exit(-1)
+    else:
+        seqs = os.path.join(cwd, seqs_arg)
+
+    if not os.path.exists(seqs):
+        sys.stderr.write(cyan(f"""Error: cannot find sequence file at {seqs}\n"""))
+        sys.exit(-1)
+    return seqs
+
+def get_outgroup_sequence(outgroup_arg, cwd, config):
+    if outgroup_arg:
+        reference_fasta = os.path.join(cwd, outgroup_arg)
+        if not os.path.isfile(reference_fasta):
+            sys.stderr.write(cyan(f"""Error: cannot find specified outgroup file at {outgroup_arg}\n"""))
+            sys.exit(-1)
+        else:
+            config["reference_fasta"] = reference_fasta
+    else:
+        reference_fasta = pkg_resources.resource_filename('llama', 'data/reference.fasta')
+        config["reference_fasta"] = reference_fasta
 
 def get_temp_dir(tempdir_arg, cwd):
     tempdir = ''
