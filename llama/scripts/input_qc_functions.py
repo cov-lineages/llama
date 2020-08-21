@@ -283,7 +283,7 @@ def parse_input_query(query_arg,ids_arg,cwd,config):
     query = os.path.join(cwd,query_arg)
             
     if not os.path.exists(query):
-        if id_args:
+        if ids_arg:
             id_list = query_arg.split(",")
             query = os.path.join(config["tempdir"], "query.csv")
             with open(query,"w") as fw:
