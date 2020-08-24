@@ -54,13 +54,13 @@ def find_tallest_tree(input_dir):
     max_height = sorted(tree_heights, reverse=True)[0]
     return max_height
 
-def display_name(tree, tree_name, tree_dir, full_taxon_dict, query_dict, label_fields):
+def display_name(tree, tree_name, tree_dir, outdir, full_taxon_dict, query_dict, label_fields):
     for k in tree.Objects:
         if k.branchType == 'leaf':
             name = k.name
             
             if "inserted" in name:
-                collapsed_node_info = summarise_collapsed_node_for_label(tree_dir, name, tree_name, full_taxon_dict)
+                collapsed_node_info = summarise_collapsed_node_for_label(tree_dir, outdir, name, tree_name, full_taxon_dict)
                 k.traits["display"] = collapsed_node_info
             else:
                 if name in full_taxon_dict:
@@ -117,9 +117,9 @@ def find_colour_dict(query_dict, trait):
         return colour_dict
 
 
-def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, colour_dict_dict, colour_fields, label_fields, tallest_height,lineage, taxon_dict, query_dict):
+def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, outdir, num_tips, colour_dict_dict, colour_fields, label_fields, tallest_height,lineage, taxon_dict, query_dict):
 #make colour_dict_dict optional argument
-    display_name(My_Tree, tree_name, tree_dir, taxon_dict, query_dict, label_fields) 
+    display_name(My_Tree, tree_name, tree_dir, outdir, taxon_dict, query_dict, label_fields) 
     My_Tree.uncollapseSubtree()
 
 
@@ -283,7 +283,7 @@ def sort_trees_index(tree_dir):
         
     return c
 
-def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, label_fields, min_uk_taxa=3):
+def make_all_of_the_trees(input_dir, outdir, tree_name_stem,taxon_dict, query_dict, colour_fields, label_fields, min_uk_taxa=3):
 
     tallest_height = find_tallest_tree(input_dir)
 
@@ -301,9 +301,9 @@ def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, labe
         colour_dict_dict[trait] = colour_dict
 
     for tree_number in lst:
-        treename = "tree_" + str(tree_number)
-        treefile = "local_" + str(tree_number) + ".tree"
-        nodefile = "local_" + str(tree_number)
+        treename = f"tree_{tree_number}"
+        treefile = f"{tree_name_stem}_{tree_number}.tree"
+        nodefile = f"{tree_name_stem}_{tree_number}"
         num_taxa = 0
 
         tree = bt.loadNewick(input_dir + "/" + treefile, absoluteTime=False)
@@ -333,7 +333,7 @@ def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, labe
 
             overall_tree_count += 1     
         
-            make_scaled_tree_without_legend(tree, nodefile, input_dir, len(tips), colour_dict_dict, colour_fields, label_fields,tallest_height, tree_number, taxon_dict, query_dict)   
+            make_scaled_tree_without_legend(tree, nodefile, input_dir, outdir, len(tips), colour_dict_dict, colour_fields, label_fields,tallest_height, tree_number, taxon_dict, query_dict)   
   
         else:
             too_tall_trees.append(tree_number)
@@ -341,59 +341,60 @@ def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, labe
 
     return too_tall_trees, overall_tree_count, overall_df_dict, colour_dict_dict
 
-def summarise_collapsed_node_for_label(tree_dir, focal_node, focal_tree, full_tax_dict): 
+def summarise_collapsed_node_for_label(tree_dir, outdir, focal_node, focal_tree, full_tax_dict): 
     
     focal_tree_file = focal_tree + ".txt"
+    warn_out = os.path.join(outdir, "tree_build_warnings.txt")
+    with open(warn_out,"w") as f_warnings:
+        with open(tree_dir + "/" + focal_tree_file) as f:
+            next(f)
+            for l in f:
+                toks = l.strip("\n").split("\t")
+                node_name = toks[0]
+                members = toks[1]
+            
+                if node_name == focal_node:
+                    lineages = []
+                    
+                    member_list = members.split(",")
+                    number_nodes = str(len(member_list)) + " nodes"
 
-    with open(tree_dir + "/" + focal_tree_file) as f:
-        next(f)
-        for l in f:
-            toks = l.strip("\n").split("\t")
-            node_name = toks[0]
-            members = toks[1]
-        
-            if node_name == focal_node:
-                lineages = []
-                
-                member_list = members.split(",")
-                number_nodes = str(len(member_list)) + " nodes"
-
-                for tax in member_list:
-                    if tax in full_tax_dict.keys():
-                        taxon_obj = full_tax_dict[tax]
+                    for tax in member_list:
+                        if tax in full_tax_dict.keys():
+                            taxon_obj = full_tax_dict[tax]
+                            
+                            lineages.append(taxon_obj.global_lin)
                         
-                        lineages.append(taxon_obj.global_lin)
-                    
-                    else: #should always be in the full metadata now
-                        print("tax missing from full metadata")
-                    
-                lineage_counts = Counter(lineages)
+                        else: #should always be in the full metadata now
+                            f_warnings.write(f"{tax} missing from full metadata\n")
+                        
+                    lineage_counts = Counter(lineages)
 
-                most_common_lineages = []
+                    most_common_lineages = []
 
-                if len(lineage_counts) > 5:
-                    
-                    remaining = len(lineage_counts) - 5
-                    
-                    most_common_tups = lineage_counts.most_common(5)
-                    for i in most_common_tups:
-                        most_common_lineages.append(i[0])
+                    if len(lineage_counts) > 5:
+                        
+                        remaining = len(lineage_counts) - 5
+                        
+                        most_common_tups = lineage_counts.most_common(5)
+                        for i in most_common_tups:
+                            most_common_lineages.append(i[0])
 
-                    pretty_lineages_prep = str(most_common_lineages).lstrip("[").rstrip("]").replace("'", "")
+                        pretty_lineages_prep = str(most_common_lineages).lstrip("[").rstrip("]").replace("'", "")
+                        
+                        if remaining == 1:
+                            pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " other"
+                        else:
+                            pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " others"
                     
-                    if remaining == 1:
-                        pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " other"
                     else:
-                        pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " others"
-                
-                else:
-                    pretty_lineages = str(list(lineage_counts.keys())).lstrip("[").rstrip("]").replace("'", "")
+                        pretty_lineages = str(list(lineage_counts.keys())).lstrip("[").rstrip("]").replace("'", "")
 
 
-                node_number = node_name.lstrip("inserted_node")
-                pretty_node_name = "Collapsed node " + node_number
+                    node_number = node_name.lstrip("inserted_node")
+                    pretty_node_name = "Collapsed node " + node_number
 
-                info = pretty_node_name + ": " + number_nodes + " in " + pretty_lineages
+                    info = pretty_node_name + ": " + number_nodes + " in " + pretty_lineages
 
     return info
 

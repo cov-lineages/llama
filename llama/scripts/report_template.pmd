@@ -28,6 +28,7 @@ missing_seq_file = "" ##CHANGE
 
 input_directory = "" ##CHANGE
 output_directory = "" ##CHANGE
+full_outdir = "" ## CHANGE
 name_stem_input = "" ##CHANGE
 
 if "/" in name_stem_input:
@@ -38,6 +39,7 @@ else:
 summary_dir = "" ##CHANGE
 figdir = "" ##CHANGE
 tree_dir = "" ##CHANGE
+tree_name_stem = "" ##CHANGE
 
 input_name_column = "" ##CHANGE
 database_name_column = "" ##CHANGE
@@ -153,7 +155,7 @@ Underneath each tree is a bar chart summarising the lineages present.
 
 
 ```python, name="make_trees", echo=False, include=False, figure=False
-too_tall_trees, overall_tree_number, overall_df_dict, colour_dict_dict = tree_viz.make_all_of_the_trees(tree_dir, full_tax_dict, query_dict, colour_fields, label_fields)
+too_tall_trees, overall_tree_number, overall_df_dict, colour_dict_dict = tree_viz.make_all_of_the_trees(tree_dir, full_outdir,tree_name_stem, full_tax_dict, query_dict, colour_fields, label_fields)
 ``` 
 
 ```python, name="make_legend", echo=False, include=False, results='tex'
@@ -178,7 +180,7 @@ tree_to_lin_fig, lineages_present = tree_viz.describe_lineages(full_tax_dict)
 
     for i in range(1,overall_tree_number+1):
         tree_name = "Tree " + str(i)
-        lookup = "local_" + str(i)
+        lookup = tree_name_stem + "_" + str(i)
         print("## " + tree_name)
         if len(tree_to_tip[lookup]) == 1:
             print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " query.")

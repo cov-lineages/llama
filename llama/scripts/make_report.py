@@ -7,9 +7,25 @@ import shutil
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 
-def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, treedir, figdir, report_template, failed_seqs, no_seq, input_column, data_column, label_fields, colour_fields):
+def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, full_outdir, treedir, figdir, report_template, failed_seqs, no_seq, input_column, data_column, label_fields, colour_fields):
 
     name_stem = ".".join(outfile.split(".")[:-1])
+
+    tree_name_stems = []
+    for r,d,f in os.walk(treedir):
+        for fn in f:
+            if fn.endswith(".tree"):
+                tree_name_stems.append(fn.split("_")[0])
+    tree_name_stems = list(set(tree_name_stems))
+    if len(tree_name_stems) > 1:
+        sys.stderr.write("Error: Multiple tree names found")
+        sys.exit(-1)
+    elif len(tree_name_stems) == 0:
+        sys.stderr.write("Error: No trees found in tree directory. Note, tree name much end with .tree")
+        sys.exit(-1)
+    else:
+        tree_name_stem = tree_name_stems[0]
+
     with open(outfile, 'w') as pmd_file:
     
         md_template = report_template
@@ -17,6 +33,7 @@ def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, treedir
  
         change_line_dict = {
                             "output_directory": f'output_directory = "{outdir}"\n',
+                            "full_outdir": f'full_outdir = "{full_outdir}"\n',
                             "name_stem_input": f'name_stem_input = "{name_stem}"\n',
                             "full_metadata_file": f'full_metadata_file = "{metadata}"\n',
                             "filtered_db_metadata": f'filtered_db_metadata = "{filtered_metadata}"\n',
@@ -24,6 +41,7 @@ def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, treedir
                             "input_directory": f'input_directory = "{treedir}"\n',
                             "figdir": f'figdir = "{figdir}"\n',
                             "tree_dir": f'tree_dir = "{treedir}"\n',
+                            "tree_name_stem": f'tree_name_stem = "{tree_name_stem}"\n',
                             "summary_dir": f'summary_dir = "{summary_dir}"\n',
                             "QC_fail_file": f'QC_fail_file = "{failed_seqs}"\n',
                             "missing_seq_file": f'missing_seq_file = "{no_seq}"\n',
@@ -60,6 +78,8 @@ def main():
 
     parser.add_argument("-o","--outfile", default="llama_report.pmd", help="output name stem as a string",dest="outfile")
     parser.add_argument("--outdir", help="output directory",dest="outdir")
+    parser.add_argument("--full-outdir", help="full output directory",dest="full_outdir")
+
     parser.add_argument("--figdir", help="output directory",dest="figdir")
 
     parser.add_argument('--input-column', action="store",help="Column in input csv file to match with database. Default: name", dest="input_column",default="name")
@@ -71,7 +91,7 @@ def main():
 
     args = parser.parse_args()
 
-    make_report(args.metadata, args.input_csv, args.filtered_metadata, args.outfile, args.outdir, args.treedir, args.figdir, args.report_template, args.failed_seqs,args.no_seq, args.input_column, args.data_column, args.colour_fields, args.label_fields)
+    make_report(args.metadata, args.input_csv, args.filtered_metadata, args.outfile, args.outdir, args.full_outdir, args.treedir, args.figdir, args.report_template, args.failed_seqs,args.no_seq, args.input_column, args.data_column, args.colour_fields, args.label_fields)
 
 
 if __name__ == "__main__":
