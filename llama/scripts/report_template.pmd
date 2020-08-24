@@ -103,7 +103,7 @@ if count_fails != 0 or count_missing != 0:
     if count_fails != 0:
         fail_dict = dp.investigate_QC_fails(QC_fail_file)
         if len(fail_dict) > 0:
-            print("The following sequences have failed QC:\n")
+            print("Failed QC:\n")
             for seq, reason in fail_dict.items():
                 pretty_name = seq.replace("'","")
                 pretty_reason = reason.replace("'","")
@@ -111,7 +111,7 @@ if count_fails != 0 or count_missing != 0:
     if count_missing != 0:
         print("\n")
         failed_names = dp.print_missing_seqs(missing_seq_file)
-        print("The following seqs were not found in db and a fasta file was not provided, so LLAMA was unable to add them into phylogenies:\n")
+        print("Not found in the background data and no additional fasta file provided:\n")
         for i in failed_names:
             print(" - " + i.replace("'","")) 
 ```
@@ -127,19 +127,15 @@ for tax in query_dict.values():
     else:
         not_in_db_number += 1
 
-print(str(number_seqs) + " sequences are summarised in total.")
+print(str(number_seqs) + " sequences described in this report\n\n")
 
-if db_number != 0 and not_in_db_number != 0:
-    print(str(db_number) + " were found in the database, leaving " + str(not_in_db_number) + " which were not.")
-elif db_number == 0:
-    print("None of the sequences were found in the database.")
-elif not_in_db_number == 0:
-    print("All of the sequences were found in the database.")
+print(f" - {db_number} already in global tree\n - {not_in_db_number} added into local trees\n")
+
+
 
 ```
 
 The table below is a summary of these sequences provided with metadata, along with the global lineage they have been assigned.
-To get more information about individual lineages, click on the lineage name in the table. 
 
 ```python, name="first_table", echo=False, results="tex"
 
@@ -150,8 +146,8 @@ print(df.to_markdown())
 
 ## Phylogenies
 
-The nearest neighbours of each of the query sequences are shown below to enable the assessment of monophyly.
-Underneath each tree is a bar chart summarising the lineages present.
+The nearest neighbours of each of the sequences of interest are shown below.
+Underneath each tree is a bar chart describing the lineages present.
 
 
 ```python, name="make_trees", echo=False, include=False, figure=False
@@ -163,12 +159,12 @@ for trait, colour_dict in colour_dict_dict.items():
     tree_viz.make_legend(colour_dict)
     number_of_options = len(colour_dict)
     if number_of_options > 15:
-        print("WARNING: There are more than 15 options to colour by for " + trait + ", which will make it difficult to see the differences between colours. Consider adding the trait to the taxon labels on the tree by using the flag _--label-fields_ when calling CIVET.")
+        print("WARNING: There are more than 15 options to colour by for " + trait + ", which will make it difficult to see the differences between colours. Consider adding the trait to the taxon labels on the tree by using the flag _--label-fields_.")
 ```
 ```python,name="show_legend",echo=False,results='raw'
 for i, trait in enumerate(colour_dict_dict.keys()):
-    print("The legend for " + trait + " is shown below.\n")
-    print("![](" + figdir + "/" + name_stem + "_make_legend_" + str(i+1) + ".png)")
+    print(f"{trait}\n")
+    print(f"![]({figdir}/{name_stem}_make_legend_{i+1}.png)")
     print("\n")
 ```
 
@@ -179,23 +175,23 @@ tree_to_lin_fig, lineages_present = tree_viz.describe_lineages(full_tax_dict)
 ```python, name="show_trees", echo=False, results='raw'
 
     for i in range(1,overall_tree_number+1):
-        tree_name = "Tree " + str(i)
-        lookup = tree_name_stem + "_" + str(i)
-        print("### " + tree_name)
+        tree_name = f"Tree {i}"
+        lookup = f"{tree_name_stem}_{i}"
+        print(f"### {tree_name}\n")
         if len(tree_to_tip[lookup]) == 1:
-            print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " sequence of interest.")
+            print(f"{len(tree_to_tip[lookup])} sequence of interest")
         else:
-            print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " sequences of interest.")
+            print(f"{len(tree_to_tip[lookup])} sequences of interest")
         print("   ")
         print("![](" + figdir + "/" + name_stem + "_make_trees_" + str(i) + ".png)")
 
-        print(f"The following figure summarises the lineages found in Tree {i}")
+        print(f"Lineages")
         if len(lineages_present[lookup]) > 2:
             print(f'\n<center>\n<img src="{figdir}/{name_stem}_make_lineage_bars_{tree_to_lin_fig[lookup]}.png" width=70% />\n</center>\n')
         else:
             lins = lineages_present[lookup]
             for i,v in lins.items():
-                print(" - " + str(i) + " (" + str(v) + " sequences)") 
+                print(f" - {i} ({v} sequences)") 
 
 ```
 
@@ -217,7 +213,6 @@ import platform
 
 
 print("Python " + platform.python_version())
-
 print("Matplotlib version " + matplotlib.__version__)
 print("Pandas version " + pd.__version__)
 print("Tabulate version " + tabulate.__version__)
@@ -227,13 +222,9 @@ print("Scipy version " + sp.__version__)
 print("Baltic")
 
 
-print("llama version is 0.1")
 ```
 
-### Acknowledgements
-
 This report was generated by llama.
-
 
 ```python, name="footer", echo=False, results='raw'
 print('<img src="' + figdir + '/footer.png" alt="drawing" style="width:80px;"/>')
