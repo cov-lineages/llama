@@ -86,14 +86,10 @@ def find_colour_dict(query_dict, trait):
 
     attribute_options = set()
 
-    cmap = cm.get_cmap("viridis")
+    cmap = cm.get_cmap("Paired")
 
     if trait == "adm1": 
-        colour_dict = {"Wales":"darkseagreen",
-                "England":"indianred",
-                "Scotland":"steelblue",
-                "Northern_Ireland":"skyblue",
-                "NA": "goldenrod"}
+        colour_dict = {"NA": "#924242"}
         return colour_dict
 
     else:
@@ -101,8 +97,8 @@ def find_colour_dict(query_dict, trait):
             attribute_options.add(query.attribute_dict[trait])
             
     if len(attribute_options) == 2:
-        colour_dict = {list(attribute_options)[0]: "goldenrod",
-                        list(attribute_options)[1]:"midnightblue"}
+        colour_dict = {list(attribute_options)[0]: "#924242",
+                        list(attribute_options)[1]:"#abbca3"}
         return colour_dict
 
     else:
@@ -157,9 +153,9 @@ def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, outdir, num_ti
 
     else:
 
-        cn_func = lambda k: "goldenrod" if k.name in query_dict.keys() else 'dimgrey'
-        co_func=lambda k: "goldenrod" if k.name in query_dict.keys() else 'dimgrey' 
-        outline_colour_func = lambda k: "goldenrod" if k.name in query_dict.keys() else 'dimgrey' 
+        cn_func = lambda k: "#924242" if k.name in query_dict.keys() else 'dimgrey'
+        co_func=lambda k: "#924242" if k.name in query_dict.keys() else 'dimgrey' 
+        outline_colour_func = lambda k: "#924242" if k.name in query_dict.keys() else 'dimgrey' 
 
     x_attr=lambda k: k.height + offset
     y_attr=lambda k: k.y
@@ -513,19 +509,21 @@ def describe_lineages(full_tax_dict):
     for tree, counts in lineages_present.items():
         if len(counts) > 2:
 
-            fig, ax = plt.subplots(1,1, figsize=(5,5), dpi=100)
+            fig, ax = plt.subplots(1,1, figsize=(5,2.5), dpi=250)
+            
+            if len(counts) <= 5:
+                sorted_counts = sorted(counts, key = lambda x : counts[x], reverse = True)
+                x = list(sorted_counts)
+                y = [counts[i] for i in x]
+            elif len(counts) > 5:
+                selected = sorted(dict(counts.most_common(10)), key = lambda x : counts[x], reverse = True)
+                x = list(selected)
+                y = [counts[i] for i in x]
 
-            if len(counts) <= 10:
-                x = list(counts.keys())
-                y = list(counts.values())
-            elif len(counts) > 10:
-                selected = dict(counts.most_common(10))
-                x = list(selected.keys())
-                y = list(selected.values())
-
-            ax.bar(x,y)
-
-            ax.set_xticklabels(x, rotation=45)
+            ax.bar(x,y, color="#924242")
+            ax.set_xticklabels(x, rotation=90)
+            ax.spines['top'].set_visible(False) ## make axes invisible
+            ax.spines['right'].set_visible(False)
             ax.set_ylabel("Number of sequences")
             ax.set_xlabel("Global lineage")
             

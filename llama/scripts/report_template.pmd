@@ -60,7 +60,7 @@ if label_fields_input != "NONE":
     for i in options: 
         label_fields.append(i)
 
-font_props = font_manager.FontProperties(family=["sans-serif"])
+font_props = font_manager.FontProperties(family=["helvetica","sans-serif"])
 a = matplotlib.font_manager.FontManager()
 a.findfont(font_props, fallback_to_default=True)
 
@@ -181,17 +181,17 @@ tree_to_lin_fig, lineages_present = tree_viz.describe_lineages(full_tax_dict)
     for i in range(1,overall_tree_number+1):
         tree_name = "Tree " + str(i)
         lookup = tree_name_stem + "_" + str(i)
-        print("## " + tree_name)
+        print("### " + tree_name)
         if len(tree_to_tip[lookup]) == 1:
-            print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " query.")
+            print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " sequence of interest.")
         else:
-            print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " queries.")
+            print("Tree number " + str(i) + " contains " + str(len(tree_to_tip[lookup])) + " sequences of interest.")
         print("   ")
         print("![](" + figdir + "/" + name_stem + "_make_trees_" + str(i) + ".png)")
 
-        print("#### Lineage summary")
+        print(f"The following figure summarises the lineages found in Tree {i}")
         if len(lineages_present[lookup]) > 2:
-            print("![](" + figdir + "/" + name_stem + "_make_lineage_bars_" + str(tree_to_lin_fig[lookup]) + ".png)")
+            print(f'<center><img src="{figdir}/{name_stem}_make_lineage_bars_{tree_to_lin_fig[lookup]}.png" width=70% /></center>')
         else:
             lins = lineages_present[lookup]
             for i,v in lins.items():
