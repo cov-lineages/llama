@@ -1,12 +1,12 @@
-name,lineage
-example_austria1,B.1.1.6
-example_austria2,B.1.1.6
-Austria/CeMM0172/2020,B.1.1.6
-Austria/CeMM0175/2020,B.1.1.6
-Austria/CeMM0176/2020,B.1.1.6
-example_iceland1,B.2.7
-Iceland/421/2020,B.2.7
-Iceland/417/2020,B.2.7
-Iceland/414/2020,B.2.7
-Iceland/413/2020,B.2.7
+name,lineage,town
+example_austria1,B.1.1.6,vienna
+example_austria2,B.1.1.6,vienna
+Austria/CeMM0172/2020,B.1.1.6,vienna
+Austria/CeMM0175/2020,B.1.1.6,salzburg
+Austria/CeMM0176/2020,B.1.1.6,salzburg
+example_iceland1,B.2.7,NA
+Iceland/421/2020,B.2.7,NA
+Iceland/417/2020,B.2.7,NA
+Iceland/414/2020,B.2.7,NA
+Iceland/413/2020,B.2.7,NA
 
