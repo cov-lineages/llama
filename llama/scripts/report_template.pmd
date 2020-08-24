@@ -191,7 +191,7 @@ tree_to_lin_fig, lineages_present = tree_viz.describe_lineages(full_tax_dict)
 
         print(f"The following figure summarises the lineages found in Tree {i}")
         if len(lineages_present[lookup]) > 2:
-            print(f'<center><img src="{figdir}/{name_stem}_make_lineage_bars_{tree_to_lin_fig[lookup]}.png" width=70% /></center>')
+            print(f'\n<center>\n<img src="{figdir}/{name_stem}_make_lineage_bars_{tree_to_lin_fig[lookup]}.png" width=70% />\n</center>\n')
         else:
             lins = lineages_present[lookup]
             for i,v in lins.items():
