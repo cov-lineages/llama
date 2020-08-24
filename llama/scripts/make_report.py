@@ -86,12 +86,12 @@ def main():
     parser.add_argument('--data-column', action="store",help="Column in database to match with input csv file. Default: sequence_name", dest="data_column",default="sequence_name")
 
     parser.add_argument("--colour-fields", action="store", help="fields to colour tree tips by", dest="colour_fields")
-    parser.add_argument("--label-fields", action="store", help="fields to labe tree tips by", dest="label_fields")
+    parser.add_argument("--label-fields", action="store", help="fields to label tree tips by", dest="label_fields")
 
 
     args = parser.parse_args()
 
-    make_report(args.metadata, args.input_csv, args.filtered_metadata, args.outfile, args.outdir, args.full_outdir, args.treedir, args.figdir, args.report_template, args.failed_seqs,args.no_seq, args.input_column, args.data_column, args.colour_fields, args.label_fields)
+    make_report(args.metadata, args.input_csv, args.filtered_metadata, args.outfile, args.outdir, args.full_outdir, args.treedir, args.figdir, args.report_template, args.failed_seqs,args.no_seq, args.input_column, args.data_column,  args.label_fields, args.colour_fields)
 
 
 if __name__ == "__main__":
