@@ -42,6 +42,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-ns','--no-seqs', action="store_true",help="Alignment not available. Note, to work, all queries must already be in global tree.", dest="no_seqs")
     
     parser.add_argument("-r","--report",action="store_true",help="Generate markdown report of input queries and their local trees")
+    parser.add_argument("-nr","--no-report",action="store_true",help="Do not generate report of input queries and their local trees", dest="no_report")
     parser.add_argument('--colour-fields', action="store",help="Comma separated string of fields to colour by in the report.", dest="colour_fields")
     parser.add_argument('--label-fields', action="store", help="Comma separated string of fields to add to tree report labels.", dest="label_fields")
 
@@ -112,7 +113,6 @@ def main(sysargs = sys.argv[1:]):
         config["lineage_representatives"]=False
 
     # find the data files
-    # data_dir = ""
     metadata,seqs,tree = ("","","")
     if not args.align:
         if args.datadir:
@@ -166,9 +166,8 @@ def main(sysargs = sys.argv[1:]):
     if args.fasta:
         """ 
         QC steps:
-        1) check csv header
-        2) check fasta file N content
-        3) write a file that contains just the seqs to run
+        1) check fasta file N content
+        2) write a file that contains just the seqs to run
         """
         qcfunk.input_file_qc(args.fasta,args.minlen,args.maxambig,config)
     else:
@@ -180,8 +179,10 @@ def main(sysargs = sys.argv[1:]):
 
     if args.report:
         config["report"] = True
-    else:
+    elif args.no_report:
         config["report"] = False
+    else:
+        config["report"] = True
     
     config["report_template"] =  os.path.join(thisdir, 'scripts','report_template.pmd')
     footer_fig = pkg_resources.resource_filename('llama', 'data/footer.png')
