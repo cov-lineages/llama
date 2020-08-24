@@ -143,6 +143,7 @@ rule jclusterfunk_context:
         -i {input.tree:q} \
         -o {params.outdir:q} \
         --max-parent {params.distance} \
+        --max-child {params.distance} \
         -f newick \
         -p local \
         --ignore-missing \
@@ -243,6 +244,7 @@ rule make_report:
     params:
         treedir = os.path.join(config["outdir"],"local_trees"),
         outdir = config["rel_outdir"],
+        full_outdir = config["outdir"],
         rel_figdir = os.path.join(".","figures"),
         figdir = os.path.join(config["outdir"],"figures"),
         failure = config["qc_fail"],
@@ -268,6 +270,7 @@ rule make_report:
             "--filtered-metadata {input.combined_metadata:q} "
             "--metadata {input.metadata:q} "
             "--outfile {output.outfile:q} "
+            "--full-outdir {params.full_outdir:q} "
             "--outdir {params.outdir:q} "
             "--input-column {params.input_column:q} "
             "--data-column {params.data_column:q} "
