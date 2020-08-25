@@ -201,7 +201,11 @@ if too_tall_trees != []:
         print("Tree" + str(tree) + " is too large to be rendered here.")
 ```
 
+### SNPs found in sequences of interest
 
+```python, name="genome graph", echo=False, results='raw'
+print(f"![]({figdir}/genome_graph.png)")
+```
 
 ### Software versions
 

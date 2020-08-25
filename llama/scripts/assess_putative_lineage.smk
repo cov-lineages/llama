@@ -232,6 +232,52 @@ rule process_local_trees:
                             "threshold={params.threshold} "
                             "--cores {params.cores}")
 
+
+rule find_snps:
+    input:
+        tree_summary = os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
+        snakefile = os.path.join(workflow.current_basedir,"find_snps.smk"),
+        query_seqs = rules.get_closest_in_db.output.aligned_query, #datafunk-processed seqs
+        seqs = config["seqs"],
+        outgroup_fasta = config["reference_fasta"]
+    params:
+        outdir= config["outdir"],
+        tempdir= config["tempdir"],
+        path = workflow.current_basedir,
+        threshold = config["threshold"],
+        
+        tree_dir = os.path.join(config["outdir"],"local_trees"),
+
+        cores = workflow.cores,
+        force = config["force"],
+        quiet_mode = config["quiet_mode"]
+    output:
+        genome_graph = os.path.join(config["outdir"],"figures","genome_graph.png"),
+        report = os.path.join(config["outdir"],"snp_reports","snp_reports.txt")
+    run:
+        local_trees = []
+        for r,d,f in os.walk(params.tree_dir):
+            for fn in f:
+                if fn.endswith(".tree"):
+                    file_stem = ".".join(fn.split(".")[:-1])
+                    local_trees.append(file_stem)
+        local_str = ",".join(local_trees) #to pass to snakemake pipeline
+
+        shell("snakemake --nolock --snakefile {input.snakefile:q} "
+                            "{params.force} "
+                            "{params.quiet_mode} "
+                            "--directory {params.tempdir:q} "
+                            "--config "
+                            f"catchment_str={local_str} "
+                            "outdir={params.outdir:q} "
+                            "tempdir={params.tempdir:q} "
+                            "outgroup_fasta={input.outgroup_fasta:q} "
+                            "aligned_query_seqs={input.query_seqs:q} "
+                            "seqs={input.seqs:q} "
+                            "threshold={params.threshold} "
+                            "--cores {params.cores}")
+
+
 rule make_report:
     input:
         lineage_trees = rules.process_local_trees.output.tree_summary,
@@ -240,7 +286,9 @@ rule make_report:
         metadata = config["metadata"],
         footer = config["footer"],
         report_template = config["report_template"],
-        no_seq = rules.get_closest_in_db.output.not_processed
+        no_seq = rules.get_closest_in_db.output.not_processed,
+        genome_graph = rules.find_snps.output.genome_graph,
+        snp_report = rules.find_snps.output.report
     params:
         treedir = os.path.join(config["outdir"],"local_trees"),
         outdir = config["rel_outdir"],
