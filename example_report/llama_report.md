@@ -11,12 +11,6 @@
 
 
 
-Not found in the background data and no additional fasta file provided:
-
- - example_austria1
- - example_iceland1
- - example_austria2
-
 
 The table below is a summary of these sequences provided with metadata, along with the global lineage they have been assigned.
 
