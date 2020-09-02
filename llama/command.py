@@ -45,6 +45,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-nr","--no-report",action="store_true",help="Do not generate report of input queries and their local trees", dest="no_report")
     parser.add_argument('--colour-fields', action="store",help="Comma separated string of fields to colour by in the report.", dest="colour_fields")
     parser.add_argument('--label-fields', action="store", help="Comma separated string of fields to add to tree report labels.", dest="label_fields")
+    parser.add_argument("--node-summary", action="store", help="Column to summarise collapsed nodes by. Default = Global lineage", dest="node_summary")
 
     parser.add_argument("--id-string", action="store_true",help="Indicates the input is a comma-separated id string with one or more query ids. Example: `EDB3588,EDB3589`.", dest="ids")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
@@ -161,7 +162,7 @@ def main(sysargs = sys.argv[1:]):
             input_column = args.data_column
 
         qcfunk.check_label_and_colour_fields(query, args.query, args.colour_fields, args.label_fields, input_column, config)
-
+        qcfunk.check_summary_fields(metadata, args.node_summary, config)
 
     if args.fasta:
         """ 

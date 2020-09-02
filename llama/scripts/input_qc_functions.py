@@ -332,6 +332,7 @@ def check_label_and_colour_fields(query_file, query_arg, colour_fields, label_fi
         colour_field_str = ",".join(colour_field_list)
         print(f"Going to colour by: {colour_field_str}")
         config["colour_fields"] = colour_field_str
+        
         if not label_fields:
             labels.append("NONE")
         else:
@@ -346,6 +347,26 @@ def check_label_and_colour_fields(query_file, query_arg, colour_fields, label_fi
         labels_str = ",".join(labels)
         print(f"Going to label by: {labels_str}")
         config["label_fields"] = labels_str
+
+def check_summary_fields(full_metadata, summary_field, config):
+
+    with open(full_metadata, newline="") as f:
+        reader = csv.DictReader(f)
+        column_names = reader.fieldnames
+
+        if not summary_field:
+                summary = "lineage"
+        else:
+            if summary_field in column_names:
+                summary = summary_field
+            else:
+                sys.stderr.write(cyan(f"Error: {summary_field} field not found in metadata file\n"))
+                sys.exit(-1)
+        
+        print(f"Going to summarise collapsed nodes by: {summary}")
+        config["node_summary"] = summary
+
+
                     
 def input_file_qc(fasta,minlen,maxambig,config):
     do_not_run = []

@@ -47,6 +47,7 @@ database_name_column = "" ##CHANGE
 
 colour_fields_input = "" ##CHANGE
 label_fields_input = "" ##CHANGE
+node_summary_option = "" ##CHANGE
 
 colour_fields = []
 if colour_fields_input != "NONE":
@@ -81,7 +82,7 @@ query_dict, tree_to_tip = dp.parse_filtered_metadata(filtered_db_metadata, tip_t
 if input_csv != '':
     query_dict = dp.parse_input_csv(input_csv, query_dict, input_name_column, colour_fields, label_fields) #Any query information they have provided
 
-full_tax_dict = dp.parse_full_metadata(query_dict, full_metadata_file, tip_to_tree, present_in_tree, database_name_column)
+full_tax_dict = dp.parse_full_metadata(query_dict, full_metadata_file, tip_to_tree, present_in_tree, database_name_column, node_summary_option)
 ```
 
 ```python, name="QC fails", echo=False, results="raw"
@@ -169,7 +170,7 @@ for i, trait in enumerate(colour_dict_dict.keys()):
 ```
 
 ```python, name="make_lineage_bars", echo=False, include=False, figure=False
-tree_to_lin_fig, lineages_present = tree_viz.describe_lineages(full_tax_dict)
+tree_to_trait_fig, trait_present = tree_viz.describe_traits(full_tax_dict, node_summary_option, query_dict)
 ```
 
 ```python, name="show_trees", echo=False, results='raw'
@@ -186,12 +187,12 @@ tree_to_lin_fig, lineages_present = tree_viz.describe_lineages(full_tax_dict)
         print(f"![]({figdir}/{name_stem}_make_trees_{(i*2)-1}.png)")
         print(f"![]({figdir}/{name_stem}_make_trees_{i*2}.png)")
 
-        print(f"Lineages")
-        if len(lineages_present[lookup]) > 2:
-            print(f'\n<center>\n<img src="{figdir}/{name_stem}_make_lineage_bars_{tree_to_lin_fig[lookup]}.png" width=70% />\n</center>\n')
+        print("### " + node_summary_option)
+        if len(trait_present[lookup]) > 2:
+            print(f'\n<center>\n<img src="{figdir}/{name_stem}_make_lineage_bars_{tree_to_trait_fig[lookup]}.png" width=70% />\n</center>\n')
         else:
-            lins = lineages_present[lookup]
-            for i,v in lins.items():
+            trait_values = trait_present[lookup]
+            for i,v in trait_values.items():
                 print(f" - {i} ({v} sequences)") 
 
 ```

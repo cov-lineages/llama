@@ -7,7 +7,7 @@ import shutil
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 
-def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, full_outdir, treedir, figdir, report_template, failed_seqs, no_seq, input_column, data_column, label_fields, colour_fields):
+def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, full_outdir, treedir, figdir, report_template, failed_seqs, no_seq, input_column, data_column, label_fields, colour_fields, node_summary):
 
     name_stem = ".".join(outfile.split(".")[:-1])
 
@@ -48,7 +48,8 @@ def make_report(metadata, input_csv, filtered_metadata, outfile, outdir, full_ou
                             "input_name_column": f'input_name_column = "{input_column}"\n',
                             "database_name_column": f'database_name_column = "{data_column}"\n',
                             "colour_fields": f'colour_fields_input = "{colour_fields}"\n',
-                            "label_fields": f'label_fields_input = "{label_fields}"\n'
+                            "label_fields": f'label_fields_input = "{label_fields}"\n',
+                            "node_summary_option": f'node_summary_option = "{node_summary}"\n'
                             }
         with open(md_template) as f:
             for l in f:
@@ -87,11 +88,12 @@ def main():
 
     parser.add_argument("--colour-fields", action="store", help="fields to colour tree tips by", dest="colour_fields")
     parser.add_argument("--label-fields", action="store", help="fields to label tree tips by", dest="label_fields")
+    parser.add_argument("--node-summary", action="store", help="field to summarise collapsed nodes by. Default=lineage", dest="node_summary")
 
 
     args = parser.parse_args()
 
-    make_report(args.metadata, args.input_csv, args.filtered_metadata, args.outfile, args.outdir, args.full_outdir, args.treedir, args.figdir, args.report_template, args.failed_seqs,args.no_seq, args.input_column, args.data_column,  args.label_fields, args.colour_fields)
+    make_report(args.metadata, args.input_csv, args.filtered_metadata, args.outfile, args.outdir, args.full_outdir, args.treedir, args.figdir, args.report_template, args.failed_seqs,args.no_seq, args.input_column, args.data_column,  args.label_fields, args.colour_fields, args.node_summary)
 
 
 if __name__ == "__main__":

@@ -299,7 +299,8 @@ rule make_report:
         input_column = config["input_column"],
         data_column = config["data_column"],
         colour_fields = config["colour_fields"],
-        label_fields = config["label_fields"]
+        label_fields = config["label_fields"],
+        node_summary = config["node_summary"]
     output:
         outfile = os.path.join(config["outdir"], "llama_report.md"), 
         footer_fig = os.path.join(config["outdir"], "figures", "footer.png")
@@ -323,4 +324,5 @@ rule make_report:
             "--input-column {params.input_column:q} "
             "--data-column {params.data_column:q} "
             "--colour-fields {params.colour_fields:q} "
-            "--label-fields {params.label_fields:q}")
+            "--label-fields {params.label_fields:q} "
+            "--node-summary {params.node_summary}")

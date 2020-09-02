@@ -117,7 +117,7 @@ def find_colour_dict(query_dict, trait):
         return colour_dict
 
 
-def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, outdir, num_tips, colour_dict_dict, colour_fields, label_fields, tallest_height,lineage, taxon_dict, query_dict):
+def make_scaled_tree(My_Tree, tree_name, tree_dir, outdir, num_tips, colour_dict_dict, colour_fields, label_fields, tallest_height,lineage, taxon_dict, query_dict):
 #make colour_dict_dict optional argument
     display_name(My_Tree, tree_name, tree_dir, outdir, taxon_dict, query_dict, label_fields) 
     My_Tree.uncollapseSubtree()
@@ -347,7 +347,7 @@ def make_all_of_the_trees(input_dir, outdir, tree_name_stem,taxon_dict, query_di
 
             overall_tree_count += 1     
         
-            make_scaled_tree_without_legend(tree, nodefile, input_dir, outdir, len(tips), colour_dict_dict, colour_fields, label_fields,tallest_height, tree_number, taxon_dict, query_dict)   
+            make_scaled_tree(tree, nodefile, input_dir, outdir, len(tips), colour_dict_dict, colour_fields, label_fields,tallest_height, tree_number, taxon_dict, query_dict)   
   
         else:
             too_tall_trees.append(tree_number)
@@ -368,7 +368,7 @@ def summarise_collapsed_node_for_label(tree_dir, outdir, focal_node, focal_tree,
                 members = toks[1]
             
                 if node_name == focal_node:
-                    lineages = []
+                    summary_option = []
                     
                     member_list = members.split(",")
                     number_nodes = str(len(member_list)) + " nodes"
@@ -377,38 +377,38 @@ def summarise_collapsed_node_for_label(tree_dir, outdir, focal_node, focal_tree,
                         if tax in full_tax_dict.keys():
                             taxon_obj = full_tax_dict[tax]
                             
-                            lineages.append(taxon_obj.global_lin)
+                            summary_option.append(taxon_obj.node_summary)
                         
                         else: #should always be in the full metadata now
                             f_warnings.write(f"{tax} missing from full metadata\n")
                         
-                    lineage_counts = Counter(lineages)
+                    summary_counts = Counter(summary_option)
 
-                    most_common_lineages = []
+                    most_common_counts = []
 
-                    if len(lineage_counts) > 5:
+                    if len(summary_counts) > 5:
                         
-                        remaining = len(lineage_counts) - 5
+                        remaining = len(summary_counts) - 5
                         
-                        most_common_tups = lineage_counts.most_common(5)
+                        most_common_tups = summary_counts.most_common(5)
                         for i in most_common_tups:
-                            most_common_lineages.append(i[0])
+                            most_common_counts.append(i[0])
 
-                        pretty_lineages_prep = str(most_common_lineages).lstrip("[").rstrip("]").replace("'", "")
+                        pretty_prep = str(most_common_counts).lstrip("[").rstrip("]").replace("'", "")
                         
                         if remaining == 1:
-                            pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " other"
+                            pretty = pretty_prep + " and " + str(remaining) + " other"
                         else:
-                            pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " others"
+                            pretty = pretty_prep + " and " + str(remaining) + " others"
                     
                     else:
-                        pretty_lineages = str(list(lineage_counts.keys())).lstrip("[").rstrip("]").replace("'", "")
+                        pretty = str(list(summary_counts.keys())).lstrip("[").rstrip("]").replace("'", "")
 
 
                     node_number = node_name.lstrip("inserted_node")
                     pretty_node_name = "Collapsed node " + node_number
 
-                    info = pretty_node_name + ": " + number_nodes + " in " + pretty_lineages
+                    info = pretty_node_name + ": " + number_nodes + " in " + pretty
 
     return info
 
@@ -507,24 +507,24 @@ def make_legend(colour_dict):
     plt.xticks([])
     plt.show()
 
-def describe_lineages(full_tax_dict):
+def describe_traits(full_tax_dict, node_summary, query_dict):
 
-    lineages_prep = defaultdict(list)
-    lineages_present = defaultdict(dict)
+    trait_prep = defaultdict(list)
+    trait_present = defaultdict(dict)
 
     for tax in full_tax_dict.values():
-        if tax.tree != "NA":
+        if tax.tree != "NA" and tax not in query_dict.values():
             key = tax.tree 
-            lineages_prep[key].append(tax.global_lin)
+            trait_prep[key].append(tax.node_summary)
 
-    for tree, lineages in lineages_prep.items():
-        counts = Counter(lineages)
-        lineages_present[tree] = counts
+    for tree, traits in trait_prep.items():
+        counts = Counter(traits)
+        trait_present[tree] = counts
 
     fig_count = 1
-    tree_to_lin_fig = {}
+    tree_to_trait_fig = {}
     
-    for tree, counts in lineages_present.items():
+    for tree, counts in trait_present.items():
         if len(counts) > 2:
 
             fig, ax = plt.subplots(1,1, figsize=(5,2.5), dpi=250)
@@ -543,13 +543,13 @@ def describe_lineages(full_tax_dict):
             ax.spines['top'].set_visible(False) ## make axes invisible
             ax.spines['right'].set_visible(False)
             ax.set_ylabel("Number of sequences")
-            ax.set_xlabel("Global lineage")
+            ax.set_xlabel(node_summary)
             
-            tree_to_lin_fig[tree] = fig_count
+            tree_to_trait_fig[tree] = fig_count
             fig_count += 1
 
 
-    return tree_to_lin_fig, lineages_present
+    return tree_to_trait_fig, trait_present
     
 
 

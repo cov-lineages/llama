@@ -109,6 +109,9 @@ optional arguments:
   --label-fields LABEL_FIELDS
                         Comma separated string of fields to add to tree report
                         labels.
+  --node-summary SUMMARY FIELD
+                        Indicates which column the collapsed nodes should be 
+                        summarised be. Default = lineage
   --id-string           Indicates the input is a comma-separated id string
                         with one or more query ids. Example:
                         `EDB3588,EDB3589`.
