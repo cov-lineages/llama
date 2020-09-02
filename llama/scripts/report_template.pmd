@@ -183,7 +183,8 @@ tree_to_lin_fig, lineages_present = tree_viz.describe_lineages(full_tax_dict)
         else:
             print(f"{len(tree_to_tip[lookup])} sequences of interest")
         print("   ")
-        print("![](" + figdir + "/" + name_stem + "_make_trees_" + str(i) + ".png)")
+        print(f"![]({figdir}/{name_stem}_make_trees_{(i*2)-1}.png)")
+        print(f"![]({figdir}/{name_stem}_make_trees_{i*2}.png)")
 
         print(f"Lineages")
         if len(lineages_present[lookup]) > 2:
