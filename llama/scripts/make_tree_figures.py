@@ -72,14 +72,18 @@ def display_name(tree, tree_name, tree_dir, outdir, full_taxon_dict, query_dict,
                     k.traits["display"] = f"{name}|{date}|{global_lineage}"    
 
                     
-
                     if name in query_dict.keys():
                         if len(label_fields) > 0: 
                             for label_element in label_fields:
                                 k.traits["display"] = k.traits["display"] + "|" + taxon_obj.attribute_dict[label_element]            
                 
                 else:
-                    k.traits["display"] = name + "|" + "not in dict"
+                    if name.startswith("subtree"):
+                        number = name.split("_")[-1]
+                        display = f"Tree {number}"
+                        k.traits["display"] = display
+                    else:
+                        k.traits["display"] = name + "|" + "not in dict"
 
 
 def find_colour_dict(query_dict, trait): 

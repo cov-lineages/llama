@@ -177,7 +177,7 @@ def make_initial_table(query_dict, colour_fields, label_fields):
         df_dict["Global lineage"].append(query.global_lin)
         
         if query.tree != "NA":
-            tree_number = query.tree.split("_")[1]
+            tree_number = query.tree.split("_")[-1]
             pretty_tree = "Tree " + str(tree_number)
             df_dict["Tree"].append(pretty_tree)
         else:
