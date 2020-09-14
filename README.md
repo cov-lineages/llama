@@ -86,6 +86,11 @@ optional arguments:
                         Input csv file with minimally `name` as a column
                         header. Alternatively, `--input-column` can specifiy a
                         column name other than `name`
+  -fm [FROM_METADATA [FROM_METADATA ...]], --from-metadata [FROM_METADATA [FROM_METADATA ...]]
+                        Generate a query from the metadata file supplied.
+                        Define a search that will be used to pull out
+                        sequences of interest from the large phylogeny. E.g.
+                        -fm country=Ireland sample_date=2020-03-01:2020-04-01
   -f FASTA, --fasta FASTA
                         Optional fasta query. Fasta sequence names must
                         exactly match those in your input query.
@@ -104,6 +109,9 @@ optional arguments:
   --label-fields LABEL_FIELDS
                         Comma separated string of fields to add to tree report
                         labels.
+  --node-summary SUMMARY FIELD
+                        Indicates which column the collapsed nodes should be 
+                        summarised be. Default = lineage
   --id-string           Indicates the input is a comma-separated id string
                         with one or more query ids. Example:
                         `EDB3588,EDB3589`.
@@ -152,7 +160,18 @@ llama -a -s your_input_sequences.fasta
 
 Generate a report with your sequences summarised:
 ```
-llama -r -i test.csv --fasta test.fasta --datadir <path/to/data>
+llama -r -i test.csv -f test.fasta -d <path/to/data>
+```
+
+Generate a report with a custom set of sequences defined by the metadata file supplied. After the `-fm` or `--from-metadata` argument, one or more columns in the metadata and search pattern to match can be described. A special case exists if a date range is detected (colon separated dates). The required date format is YYYY-MM-DD. 
+The format of this search is as follows:
+```
+--from-metadata column1=value1 column2=YYYY-MM-DD:YYYY-MM-DD
+```
+
+For example, the following command will pull out sequences from Ireland with samples between 2020-03-01 and 2020-04-1, provided that information exists metadata.csv file found in the data directory.
+```
+llama -r -fm country=Ireland sample_date=2020-03-01:2020-04-01 -d <path/to/data>
 ```
 
 Include a selection of representative sequences for each lineage present in the local tree:

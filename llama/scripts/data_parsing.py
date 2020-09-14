@@ -131,7 +131,7 @@ def parse_tree_tips(tree_dir):
 
     return tips, tip_to_tree
 
-def parse_full_metadata(query_dict, full_metadata, tip_to_tree, present_in_tree, database_name_column):
+def parse_full_metadata(query_dict, full_metadata, tip_to_tree, present_in_tree, database_name_column, node_summary_option):
 
     full_tax_dict = query_dict.copy()
 
@@ -142,10 +142,9 @@ def parse_full_metadata(query_dict, full_metadata, tip_to_tree, present_in_tree,
             seq_name = sequence[database_name_column] 
 
             date = sequence["sample_date"]
-
             country = sequence["country"]
-
             glob_lin = sequence["lineage"]
+            node_summary_trait = sequence[node_summary_option]
 
             if seq_name in present_in_tree and seq_name not in query_dict.keys():
                 new_taxon = taxon(seq_name, glob_lin)
@@ -154,6 +153,8 @@ def parse_full_metadata(query_dict, full_metadata, tip_to_tree, present_in_tree,
                 
                 new_taxon.sample_date = date
                 new_taxon.country = country
+
+                new_taxon.node_summary = node_summary_trait
 
                 new_taxon.tree = tip_to_tree[seq_name]
 
@@ -177,7 +178,7 @@ def make_initial_table(query_dict, colour_fields, label_fields):
         df_dict["Global lineage"].append(query.global_lin)
         
         if query.tree != "NA":
-            tree_number = query.tree.split("_")[1]
+            tree_number = query.tree.split("_")[-1]
             pretty_tree = "Tree " + str(tree_number)
             df_dict["Tree"].append(pretty_tree)
         else:

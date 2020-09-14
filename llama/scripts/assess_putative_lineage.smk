@@ -143,6 +143,7 @@ rule jclusterfunk_context:
         -i {input.tree:q} \
         -o {params.outdir:q} \
         --max-parent {params.distance} \
+        --max-child {params.distance} \
         -f newick \
         -p local \
         --ignore-missing \
@@ -231,6 +232,52 @@ rule process_local_trees:
                             "threshold={params.threshold} "
                             "--cores {params.cores}")
 
+
+rule find_snps:
+    input:
+        tree_summary = os.path.join(config["outdir"],"local_trees","collapse_report.txt"),
+        snakefile = os.path.join(workflow.current_basedir,"find_snps.smk"),
+        query_seqs = rules.get_closest_in_db.output.aligned_query, #datafunk-processed seqs
+        seqs = config["seqs"],
+        outgroup_fasta = config["reference_fasta"]
+    params:
+        outdir= config["outdir"],
+        tempdir= config["tempdir"],
+        path = workflow.current_basedir,
+        threshold = config["threshold"],
+        
+        tree_dir = os.path.join(config["outdir"],"local_trees"),
+
+        cores = workflow.cores,
+        force = config["force"],
+        quiet_mode = config["quiet_mode"]
+    output:
+        genome_graph = os.path.join(config["outdir"],"figures","genome_graph.png"),
+        report = os.path.join(config["outdir"],"snp_reports","snp_reports.txt")
+    run:
+        local_trees = []
+        for r,d,f in os.walk(params.tree_dir):
+            for fn in f:
+                if fn.endswith(".tree"):
+                    file_stem = ".".join(fn.split(".")[:-1])
+                    local_trees.append(file_stem)
+        local_str = ",".join(local_trees) #to pass to snakemake pipeline
+
+        shell("snakemake --nolock --snakefile {input.snakefile:q} "
+                            "{params.force} "
+                            "{params.quiet_mode} "
+                            "--directory {params.tempdir:q} "
+                            "--config "
+                            f"catchment_str={local_str} "
+                            "outdir={params.outdir:q} "
+                            "tempdir={params.tempdir:q} "
+                            "outgroup_fasta={input.outgroup_fasta:q} "
+                            "aligned_query_seqs={input.query_seqs:q} "
+                            "seqs={input.seqs:q} "
+                            "threshold={params.threshold} "
+                            "--cores {params.cores}")
+
+
 rule make_report:
     input:
         lineage_trees = rules.process_local_trees.output.tree_summary,
@@ -239,17 +286,21 @@ rule make_report:
         metadata = config["metadata"],
         footer = config["footer"],
         report_template = config["report_template"],
-        no_seq = rules.get_closest_in_db.output.not_processed
+        no_seq = rules.get_closest_in_db.output.not_processed,
+        genome_graph = rules.find_snps.output.genome_graph,
+        snp_report = rules.find_snps.output.report
     params:
         treedir = os.path.join(config["outdir"],"local_trees"),
         outdir = config["rel_outdir"],
+        full_outdir = config["outdir"],
         rel_figdir = os.path.join(".","figures"),
         figdir = os.path.join(config["outdir"],"figures"),
         failure = config["qc_fail"],
         input_column = config["input_column"],
         data_column = config["data_column"],
         colour_fields = config["colour_fields"],
-        label_fields = config["label_fields"]
+        label_fields = config["label_fields"],
+        node_summary = config["node_summary"]
     output:
         outfile = os.path.join(config["outdir"], "llama_report.md"), 
         footer_fig = os.path.join(config["outdir"], "figures", "footer.png")
@@ -268,8 +319,10 @@ rule make_report:
             "--filtered-metadata {input.combined_metadata:q} "
             "--metadata {input.metadata:q} "
             "--outfile {output.outfile:q} "
+            "--full-outdir {params.full_outdir:q} "
             "--outdir {params.outdir:q} "
             "--input-column {params.input_column:q} "
             "--data-column {params.data_column:q} "
             "--colour-fields {params.colour_fields:q} "
-            "--label-fields {params.label_fields:q}")
+            "--label-fields {params.label_fields:q} "
+            "--node-summary {params.node_summary}")

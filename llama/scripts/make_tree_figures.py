@@ -54,13 +54,13 @@ def find_tallest_tree(input_dir):
     max_height = sorted(tree_heights, reverse=True)[0]
     return max_height
 
-def display_name(tree, tree_name, tree_dir, full_taxon_dict, query_dict, label_fields):
+def display_name(tree, tree_name, tree_dir, outdir, full_taxon_dict, query_dict, label_fields):
     for k in tree.Objects:
         if k.branchType == 'leaf':
             name = k.name
             
             if "inserted" in name:
-                collapsed_node_info = summarise_collapsed_node_for_label(tree_dir, name, tree_name, full_taxon_dict)
+                collapsed_node_info = summarise_collapsed_node_for_label(tree_dir, outdir, name, tree_name, full_taxon_dict)
                 k.traits["display"] = collapsed_node_info
             else:
                 if name in full_taxon_dict:
@@ -72,28 +72,28 @@ def display_name(tree, tree_name, tree_dir, full_taxon_dict, query_dict, label_f
                     k.traits["display"] = f"{name}|{date}|{global_lineage}"    
 
                     
-
                     if name in query_dict.keys():
                         if len(label_fields) > 0: 
                             for label_element in label_fields:
                                 k.traits["display"] = k.traits["display"] + "|" + taxon_obj.attribute_dict[label_element]            
                 
                 else:
-                    k.traits["display"] = name + "|" + "not in dict"
+                    if name.startswith("subtree"):
+                        number = name.split("_")[-1]
+                        display = f"Tree {number}"
+                        k.traits["display"] = display
+                    else:
+                        k.traits["display"] = name + "|" + "not in dict"
 
 
 def find_colour_dict(query_dict, trait): 
 
     attribute_options = set()
 
-    cmap = cm.get_cmap("viridis")
+    cmap = cm.get_cmap("Paired")
 
     if trait == "adm1": 
-        colour_dict = {"Wales":"darkseagreen",
-                "England":"indianred",
-                "Scotland":"steelblue",
-                "Northern_Ireland":"skyblue",
-                "NA": "goldenrod"}
+        colour_dict = {"NA": "#924242"}
         return colour_dict
 
     else:
@@ -101,8 +101,8 @@ def find_colour_dict(query_dict, trait):
             attribute_options.add(query.attribute_dict[trait])
             
     if len(attribute_options) == 2:
-        colour_dict = {list(attribute_options)[0]: "goldenrod",
-                        list(attribute_options)[1]:"midnightblue"}
+        colour_dict = {list(attribute_options)[0]: "#924242",
+                        list(attribute_options)[1]:"#abbca3"}
         return colour_dict
 
     else:
@@ -117,9 +117,9 @@ def find_colour_dict(query_dict, trait):
         return colour_dict
 
 
-def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, colour_dict_dict, colour_fields, label_fields, tallest_height,lineage, taxon_dict, query_dict):
+def make_scaled_tree(My_Tree, tree_name, tree_dir, outdir, num_tips, colour_dict_dict, colour_fields, label_fields, tallest_height,lineage, taxon_dict, query_dict):
 #make colour_dict_dict optional argument
-    display_name(My_Tree, tree_name, tree_dir, taxon_dict, query_dict, label_fields) 
+    display_name(My_Tree, tree_name, tree_dir, outdir, taxon_dict, query_dict, label_fields) 
     My_Tree.uncollapseSubtree()
 
 
@@ -157,9 +157,9 @@ def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, colo
 
     else:
 
-        cn_func = lambda k: "goldenrod" if k.name in query_dict.keys() else 'dimgrey'
-        co_func=lambda k: "goldenrod" if k.name in query_dict.keys() else 'dimgrey' 
-        outline_colour_func = lambda k: "goldenrod" if k.name in query_dict.keys() else 'dimgrey' 
+        cn_func = lambda k: "#924242" if k.name in query_dict.keys() else 'dimgrey'
+        co_func=lambda k: "#924242" if k.name in query_dict.keys() else 'dimgrey' 
+        outline_colour_func = lambda k: "#924242" if k.name in query_dict.keys() else 'dimgrey' 
 
     x_attr=lambda k: k.height + offset
     y_attr=lambda k: k.y
@@ -179,12 +179,12 @@ def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, colo
     max_x = max(x_values)
     
     
-    fig2,ax2 = plt.subplots(figsize=(20,page_height),facecolor='w',frameon=False, dpi=100)
+    fig,ax = plt.subplots(figsize=(20,page_height),facecolor='w',frameon=False, dpi=100)
     
 
-    My_Tree.plotTree(ax2, colour_function=c_func, x_attr=x_attr, y_attr=y_attr, branchWidth=b_func)
-    My_Tree.plotPoints(ax2, x_attr=x_attr, colour_function=cn_func,y_attr=y_attr, size_function=s_func, outline_colour=outline_colour_func)
-    My_Tree.plotPoints(ax2, x_attr=x_attr, colour_function=co_func, y_attr=y_attr, size_function=so_func, outline_colour=outline_colour_func)
+    My_Tree.plotTree(ax, colour_function=c_func, x_attr=x_attr, y_attr=y_attr, branchWidth=b_func)
+    My_Tree.plotPoints(ax, x_attr=x_attr, colour_function=cn_func,y_attr=y_attr, size_function=s_func, outline_colour=outline_colour_func)
+    My_Tree.plotPoints(ax, x_attr=x_attr, colour_function=co_func, y_attr=y_attr, size_function=so_func, outline_colour=outline_colour_func)
 
     blob_dict = {}
 
@@ -198,8 +198,6 @@ def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, colo
         
             height = My_Tree.treeHeight+offset
             text_start = tallest_height+space_offset+space_offset
-
-            
 
             if len(colour_fields) > 1:
                 
@@ -217,17 +215,17 @@ def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, colo
 
                         option = query_dict[k.name].attribute_dict[trait]
                         colour_dict = colour_dict_dict[trait]
-                        trait_blob = ax2.scatter(x_value, y, tipsize*5, color=colour_dict[option])  
+                        trait_blob = ax.scatter(x_value, y, tipsize*5, color=colour_dict[option])  
                         
                         blob_dict[trait] = x_value
 
-                    ax2.text(text_start+division, y, name, size=font_size_func(k), ha="left", va="center", fontweight="light")
+                    ax.text(text_start+division, y, name, size=font_size_func(k), ha="left", va="center", fontweight="light")
                     if x != max_x:
-                        ax2.plot([x+space_offset,tallest_height],[y,y],ls='--',lw=1,color=l_func(k))
+                        ax.plot([x+space_offset,tallest_height],[y,y],ls='--',lw=1,color=l_func(k))
 
                 else:
 
-                    ax2.text(text_start+division, y, name, size=font_size_func(k), ha="left", va="center", fontweight="light")
+                    ax.text(text_start+division, y, name, size=font_size_func(k), ha="left", va="center", fontweight="light")
                     if x != max_x:
                         ax2.plot([x+space_offset,tallest_height],[y,y],ls='--',lw=1,color=l_func(k))
 
@@ -236,12 +234,12 @@ def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, colo
 
                     line_x = blob_x - (division/2)
 
-                    ax2.plot([line_x,line_x],[min_y,max_y],ls='--',lw=3,color=l_func(k))
+                    ax.plot([line_x,line_x],[min_y,max_y],ls='--',lw=3,color=l_func(k))
             
             
             else:
-                ax2.text(text_start, y, name, size=font_size_func(k), ha="left", va="center", fontweight="ultralight")
-                ax2.plot([x+space_offset,tallest_height+space_offset],[y,y],ls='--',lw=1,color=l_func(k))
+                ax.text(text_start, y, name, size=font_size_func(k), ha="left", va="center", fontweight="ultralight")
+                ax.plot([x+space_offset,tallest_height+space_offset],[y,y],ls='--',lw=1,color=l_func(k))
 
     if len(colour_fields) > 1:
 
@@ -252,21 +250,37 @@ def make_scaled_tree_without_legend(My_Tree, tree_name, tree_dir, num_tips, colo
             y = max_y
             x = blob_x
 
-            ax2.text(x,y,trait, rotation=45, size=15)
+            ax.text(x,y,trait, rotation=90, size=15,ha="center", va="bottom")
 
+    if num_tips < 10:
+        fig2,ax2 =  plt.subplots(figsize=(20,page_height/5),facecolor='w',frameon=False, dpi=200)
+    else:
+        fig2,ax2 =  plt.subplots(figsize=(20,page_height/10),facecolor='w',frameon=False, dpi=200)
 
+    length = 0.00003
+
+    ax2.plot([0,length], [0.5,0.5], ls='-', lw=1, color="dimgrey")
+    ax2.text(0.000015,0.15,"1 SNP",size=20, ha="center", va="center")
+
+    ax.spines['top'].set_visible(False) ## make axes invisible
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
     ax2.spines['top'].set_visible(False) ## make axes invisible
     ax2.spines['right'].set_visible(False)
     ax2.spines['left'].set_visible(False)
     ax2.spines['bottom'].set_visible(False)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
     
+    ax.set_xlim(-space_offset,absolute_x_axis_size)
+    ax.set_ylim(min_y,max_y)
     ax2.set_xlim(-space_offset,absolute_x_axis_size)
-    ax2.set_ylim(min_y,max_y)
+    ax2.set_ylim(0,1)
 
-    plt.yticks([])
-    plt.xticks([])
-
-    fig2.tight_layout()
+    fig.tight_layout()
 
 
 def sort_trees_index(tree_dir):
@@ -276,14 +290,14 @@ def sort_trees_index(tree_dir):
         for thing in f:
             if thing.endswith("tree"):
                 a = thing.split(".")[0]
-                b = a.split("_")[1]
+                b = a.split("_")[-1]
                 b_list.append(int(b))
         
     c = sorted(b_list, key=int)
         
     return c
 
-def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, label_fields, min_uk_taxa=3):
+def make_all_of_the_trees(input_dir, outdir, tree_name_stem,taxon_dict, query_dict, colour_fields, label_fields, min_uk_taxa=3):
 
     tallest_height = find_tallest_tree(input_dir)
 
@@ -301,9 +315,9 @@ def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, labe
         colour_dict_dict[trait] = colour_dict
 
     for tree_number in lst:
-        treename = "tree_" + str(tree_number)
-        treefile = "local_" + str(tree_number) + ".tree"
-        nodefile = "local_" + str(tree_number)
+        treename = f"tree_{tree_number}"
+        treefile = f"{tree_name_stem}_{tree_number}.tree"
+        nodefile = f"{tree_name_stem}_{tree_number}"
         num_taxa = 0
 
         tree = bt.loadNewick(input_dir + "/" + treefile, absoluteTime=False)
@@ -312,7 +326,7 @@ def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, labe
         new_node = bt.node()
         new_node.children.append(old_node)
         old_node.parent = new_node
-        old_node.length=2.0
+        old_node.length=0.000015
         new_node.height = 0
         new_node.y = old_node.y
         tree.root = new_node
@@ -333,7 +347,7 @@ def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, labe
 
             overall_tree_count += 1     
         
-            make_scaled_tree_without_legend(tree, nodefile, input_dir, len(tips), colour_dict_dict, colour_fields, label_fields,tallest_height, tree_number, taxon_dict, query_dict)   
+            make_scaled_tree(tree, nodefile, input_dir, outdir, len(tips), colour_dict_dict, colour_fields, label_fields,tallest_height, tree_number, taxon_dict, query_dict)   
   
         else:
             too_tall_trees.append(tree_number)
@@ -341,59 +355,60 @@ def make_all_of_the_trees(input_dir, taxon_dict, query_dict, colour_fields, labe
 
     return too_tall_trees, overall_tree_count, overall_df_dict, colour_dict_dict
 
-def summarise_collapsed_node_for_label(tree_dir, focal_node, focal_tree, full_tax_dict): 
+def summarise_collapsed_node_for_label(tree_dir, outdir, focal_node, focal_tree, full_tax_dict): 
     
     focal_tree_file = focal_tree + ".txt"
+    warn_out = os.path.join(outdir, "tree_build_warnings.txt")
+    with open(warn_out,"w") as f_warnings:
+        with open(tree_dir + "/" + focal_tree_file) as f:
+            next(f)
+            for l in f:
+                toks = l.strip("\n").split("\t")
+                node_name = toks[0]
+                members = toks[1]
+            
+                if node_name == focal_node:
+                    summary_option = []
+                    
+                    member_list = members.split(",")
+                    number_nodes = str(len(member_list)) + " nodes"
 
-    with open(tree_dir + "/" + focal_tree_file) as f:
-        next(f)
-        for l in f:
-            toks = l.strip("\n").split("\t")
-            node_name = toks[0]
-            members = toks[1]
-        
-            if node_name == focal_node:
-                lineages = []
-                
-                member_list = members.split(",")
-                number_nodes = str(len(member_list)) + " nodes"
-
-                for tax in member_list:
-                    if tax in full_tax_dict.keys():
-                        taxon_obj = full_tax_dict[tax]
+                    for tax in member_list:
+                        if tax in full_tax_dict.keys():
+                            taxon_obj = full_tax_dict[tax]
+                            
+                            summary_option.append(taxon_obj.node_summary)
                         
-                        lineages.append(taxon_obj.global_lin)
-                    
-                    else: #should always be in the full metadata now
-                        print("tax missing from full metadata")
-                    
-                lineage_counts = Counter(lineages)
+                        else: #should always be in the full metadata now
+                            f_warnings.write(f"{tax} missing from full metadata\n")
+                        
+                    summary_counts = Counter(summary_option)
 
-                most_common_lineages = []
+                    most_common_counts = []
 
-                if len(lineage_counts) > 5:
-                    
-                    remaining = len(lineage_counts) - 5
-                    
-                    most_common_tups = lineage_counts.most_common(5)
-                    for i in most_common_tups:
-                        most_common_lineages.append(i[0])
+                    if len(summary_counts) > 5:
+                        
+                        remaining = len(summary_counts) - 5
+                        
+                        most_common_tups = summary_counts.most_common(5)
+                        for i in most_common_tups:
+                            most_common_counts.append(i[0])
 
-                    pretty_lineages_prep = str(most_common_lineages).lstrip("[").rstrip("]").replace("'", "")
+                        pretty_prep = str(most_common_counts).lstrip("[").rstrip("]").replace("'", "")
+                        
+                        if remaining == 1:
+                            pretty = pretty_prep + " and " + str(remaining) + " other"
+                        else:
+                            pretty = pretty_prep + " and " + str(remaining) + " others"
                     
-                    if remaining == 1:
-                        pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " other"
                     else:
-                        pretty_lineages = pretty_lineages_prep + " and " + str(remaining) + " others"
-                
-                else:
-                    pretty_lineages = str(list(lineage_counts.keys())).lstrip("[").rstrip("]").replace("'", "")
+                        pretty = str(list(summary_counts.keys())).lstrip("[").rstrip("]").replace("'", "")
 
 
-                node_number = node_name.lstrip("inserted_node")
-                pretty_node_name = "Collapsed node " + node_number
+                    node_number = node_name.lstrip("inserted_node")
+                    pretty_node_name = "Collapsed node " + node_number
 
-                info = pretty_node_name + ": " + number_nodes + " in " + pretty_lineages
+                    info = pretty_node_name + ": " + number_nodes + " in " + pretty
 
     return info
 
@@ -492,47 +507,49 @@ def make_legend(colour_dict):
     plt.xticks([])
     plt.show()
 
-def describe_lineages(full_tax_dict):
+def describe_traits(full_tax_dict, node_summary, query_dict):
 
-    lineages_prep = defaultdict(list)
-    lineages_present = defaultdict(dict)
+    trait_prep = defaultdict(list)
+    trait_present = defaultdict(dict)
 
     for tax in full_tax_dict.values():
-        if tax.tree != "NA":
+        if tax.tree != "NA" and tax not in query_dict.values():
             key = tax.tree 
-            lineages_prep[key].append(tax.global_lin)
+            trait_prep[key].append(tax.node_summary)
 
-    for tree, lineages in lineages_prep.items():
-        counts = Counter(lineages)
-        lineages_present[tree] = counts
+    for tree, traits in trait_prep.items():
+        counts = Counter(traits)
+        trait_present[tree] = counts
 
     fig_count = 1
-    tree_to_lin_fig = {}
+    tree_to_trait_fig = {}
     
-    for tree, counts in lineages_present.items():
+    for tree, counts in trait_present.items():
         if len(counts) > 2:
 
-            fig, ax = plt.subplots(1,1, figsize=(5,5), dpi=100)
-
-            if len(counts) <= 10:
-                x = list(counts.keys())
-                y = list(counts.values())
-            elif len(counts) > 10:
-                selected = dict(counts.most_common(10))
-                x = list(selected.keys())
-                y = list(selected.values())
-
-            ax.bar(x,y)
-
-            ax.set_xticklabels(x, rotation=45)
-            ax.set_ylabel("Number of sequences")
-            ax.set_xlabel("Global lineage")
+            fig, ax = plt.subplots(1,1, figsize=(5,2.5), dpi=250)
             
-            tree_to_lin_fig[tree] = fig_count
+            if len(counts) <= 5:
+                sorted_counts = sorted(counts, key = lambda x : counts[x], reverse = True)
+                x = list(sorted_counts)
+                y = [counts[i] for i in x]
+            elif len(counts) > 5:
+                selected = sorted(dict(counts.most_common(10)), key = lambda x : counts[x], reverse = True)
+                x = list(selected)
+                y = [counts[i] for i in x]
+
+            ax.bar(x,y, color="#924242")
+            ax.set_xticklabels(x, rotation=90)
+            ax.spines['top'].set_visible(False) ## make axes invisible
+            ax.spines['right'].set_visible(False)
+            ax.set_ylabel("Number of sequences")
+            ax.set_xlabel(node_summary)
+            
+            tree_to_trait_fig[tree] = fig_count
             fig_count += 1
 
 
-    return tree_to_lin_fig, lineages_present
+    return tree_to_trait_fig, trait_present
     
 
 
