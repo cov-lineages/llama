@@ -227,7 +227,7 @@ def make_scaled_tree(My_Tree, tree_name, tree_dir, outdir, num_tips, colour_dict
 
                     ax.text(text_start+division, y, name, size=font_size_func(k), ha="left", va="center", fontweight="light")
                     if x != max_x:
-                        ax2.plot([x+space_offset,tallest_height],[y,y],ls='--',lw=1,color=l_func(k))
+                        ax.plot([x+space_offset,tallest_height],[y,y],ls='--',lw=1,color=l_func(k))
 
 
                 for blob_x in blob_dict.values():

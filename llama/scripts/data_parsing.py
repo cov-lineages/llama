@@ -132,7 +132,7 @@ def parse_tree_tips(tree_dir):
     return tips, tip_to_tree
 
 def parse_full_metadata(query_dict, full_metadata, tip_to_tree, present_in_tree, database_name_column, node_summary_option):
-
+                       
     full_tax_dict = query_dict.copy()
 
     with open(full_metadata, 'r') as f:
