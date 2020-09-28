@@ -4,8 +4,6 @@
 import matplotlib.pyplot as pyplot
 import pandas as pd 
 import os
-import data_parsing as dp
-import make_tree_figures as tree_viz
 import matplotlib.font_manager as font_manager
 import matplotlib as mpl
 from collections import defaultdict
@@ -15,51 +13,12 @@ import csv
 import numpy as np
 import scipy as sp
 
+from reportfunk.funks import tree_functions as tree_viz
+from reportfunk.funks import parsing_functions as dp
+from reportfunk.funks import prep_data_functions as prep_data
+
 import warnings
 warnings.filterwarnings("ignore")
-
-filtered_db_metadata = "" ##CHANGE
-input_csv = "" ##CHANGE
-full_metadata_file = "" ##CHANGE
-
-
-QC_fail_file = "" ##CHANGE
-missing_seq_file = "" ##CHANGE
-
-input_directory = "" ##CHANGE
-output_directory = "" ##CHANGE
-full_outdir = "" ## CHANGE
-name_stem_input = "" ##CHANGE
-
-if "/" in name_stem_input:
-    name_stem = name_stem_input.split("/")[-1]
-else:
-    name_stem = name_stem_input
-
-summary_dir = "" ##CHANGE
-figdir = "" ##CHANGE
-tree_dir = "" ##CHANGE
-tree_name_stem = "" ##CHANGE
-
-input_name_column = "" ##CHANGE
-database_name_column = "" ##CHANGE
-
-
-colour_fields_input = "" ##CHANGE
-label_fields_input = "" ##CHANGE
-node_summary_option = "" ##CHANGE
-
-colour_fields = []
-if colour_fields_input != "NONE":
-    options = colour_fields_input.split(",")
-    for i in options: 
-        colour_fields.append(i)
-
-label_fields= []
-if label_fields_input != "NONE":
-    options = label_fields_input.split(",")
-    for i in options: 
-        label_fields.append(i)
 
 font_props = font_manager.FontProperties(family=["helvetica","sans-serif"])
 a = matplotlib.font_manager.FontManager()
@@ -70,6 +29,33 @@ pyplot.rcParams.update({'figure.max_open_warning': 0})
 mpl.rcParams['font.weight']=50
 mpl.rcParams['axes.labelweight']=50
 
+```
+
+```python, name = "insert_arguments", echo=False, results='raw'
+
+filtered_db_metadata = "" ##CHANGE
+input_csv = "" ##CHANGE
+full_metadata_file = "" ##CHANGE
+QC_fail_file = "" ##CHANGE
+missing_seq_file = "" ##CHANGE
+input_directory = "" ##CHANGE
+output_directory = "" ##CHANGE
+full_outdir = "" ## CHANGE
+name_stem_input = "" ##CHANGE
+summary_dir = "" ##CHANGE
+figdir = "" ##CHANGE
+tree_dir = "" ##CHANGE
+tree_name_stem = "" ##CHANGE
+input_name_column = "" ##CHANGE
+database_name_column = "" ##CHANGE
+colour_fields_input = "" ##CHANGE
+label_fields_input = "" ##CHANGE
+node_summary_option = "" ##CHANGE
+
+```
+
+```python, name="prep_args", echo=False
+label_fields, colour_fields, name_stem = prep_data.prepping_llama_arguments(colour_fields_input, label_fields_input, name_stem_input)
 ```
 
 

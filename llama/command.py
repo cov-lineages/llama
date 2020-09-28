@@ -7,7 +7,6 @@ import snakemake
 import sys
 from tempfile import gettempdir
 import tempfile
-import input_qc_functions as qcfunk
 import pprint
 import json
 import csv
@@ -15,6 +14,10 @@ import os
 import datetime 
 from datetime import datetime
 from Bio import SeqIO
+
+from reportfunk.funks import io_functions as qcfunk
+from reportfunk.funks import report_functions as rfunk
+from reportfunk.funks import custom_logger as custom_logger
 
 import pkg_resources
 from . import _program
@@ -135,22 +138,23 @@ def main(sysargs = sys.argv[1:]):
                 sys.stderr.write(qcfunk.cyan(f"Error: Metadata file missing header field {args.data_column}\nEither specifiy `--data-column` or supply a column with header `sequence_name`\n"))
                 sys.exit(-1)
 
-        if args.from_metadata and args.query:
+        if (args.from_metadata and args.query) or ("from_metadata" in config and "query" in config):
             sys.stderr.write(qcfunk.cyan(f"Error: Please provide either an input query file (`-i`) or define some search criteria from the metadata (`-fm`)\n"))
             sys.exit(-1)
         
-        elif args.from_metadata:
-            query = qcfunk.parse_from_metadata_arg(metadata, args.from_metadata, args.data_column, config)
+        elif args.from_metadata or "from_metadata" in config:
+            #query = qcfunk.parse_from_metadata_arg(metadata, args.from_metadata, args.data_column, config)
+            qcfunk.generate_query_from_metadata(args.from_metadata,metadata,config)
+             
 
         elif args.query:
             # find the query csv, or string of ids
             query = os.path.join(cwd, args.query)
-
             config["input_column"] = args.input_column
-
-            query = qcfunk.parse_input_query(args.query, args.ids, cwd, config)
-
-            config["query"] = query
+            
+            qcfunk.check_query_file(query, cwd, config)
+            # query = qcfunk.parse_input_query(args.query, args.ids, cwd, config)
+            # config["query"] = query
         else:
             sys.stderr.write(qcfunk.cyan(f"Error: please input a query (`-i`) or define a search (`-fm`)\n"))
             sys.exit(-1)
