@@ -144,7 +144,7 @@ rule jclusterfunk_context:
         -o {params.outdir:q} \
         --max-parent {params.distance} \
         --max-child {params.distance} \
-        -f newick \
+        -f nexus \
         -p local \
         --ignore-missing \
         -m {input.metadata:q} \

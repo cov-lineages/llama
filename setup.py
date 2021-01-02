@@ -44,7 +44,7 @@ setup(name='llama',
         ],
       description='Local Lineage and Monophyly Assessment',
       url='github.com/cov-lineages/llama',
-      author='Aine OToole & Rambaut Lab',
+      author='Aine OToole, Verity Hill, Ben Jackson, Adrew Rambaut',
       author_email='aine.otoole@ed.ac.uk',
       entry_points="""
       [console_scripts]

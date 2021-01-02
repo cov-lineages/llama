@@ -52,7 +52,7 @@ rule gofasta:
     shell:
         # produces query,closest,SNPdistance,SNPs
         """
-        gofasta closest --target {input.seqs:q} \
+        gofasta closest --target {input.background_seqs:q} \
         --query {input.query_seqs:q} \
         --outfile {output.csv:q} \
         -t {workflow.cores}
