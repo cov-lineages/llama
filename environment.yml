@@ -12,6 +12,7 @@ dependencies:
   - snakemake-minimal=5.13
   - openjdk
   - cov-ert::jclusterfunk
+  - benjamincjackson::gofasta
   - pip:
     - pandas==1.0.1
     - pytools==2020.1

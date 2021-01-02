@@ -42,41 +42,38 @@ rule datafunk_trim_and_pad:
           --log-inserts 
         """
 
-rule minimap2_against_all:
+rule gofasta:
     input:
         query_seqs = rules.datafunk_trim_and_pad.output.fasta,
-        seqs = config["seqs"]
+        background_seqs = config["seqs"]
     threads: workflow.cores
-    message: "Running minimap2 against the entire fasta db using {threads} threads"
     output:
-        paf = os.path.join(config["tempdir"],"post_qc_query.mapped.paf")
-    log:
-        os.path.join(config["tempdir"],"logs","minimap2_to_all.log")
+        csv = os.path.join(config["tempdir"],"closest_gofasta.csv")
     shell:
+        # produces query,closest,SNPdistance,SNPs
         """
-        minimap2 -x asm5  -t {threads} --secondary=no \
-        --paf-no-hit {input.seqs:q} {input.query_seqs:q} \
-        -o {output.paf:q} &> {log}
+        gofasta closest --target {input.seqs:q} \
+        --query {input.query_seqs:q} \
+        --outfile {output.csv:q} \
+        -t {workflow.cores}
         """
 
-rule parse_paf:
+
+rule parse_closest:
     input:
-        paf = rules.minimap2_against_all.output.paf,
+        csv = rules.gofasta.output.csv,
         metadata = config["metadata"],
         fasta = config["seqs"]
-    params:
-        data_column = config["data_column"]
-    message: "Parsing out the top hit in the database for each query sequence"
     output:
         fasta = os.path.join(config["tempdir"],"closest_in_db.fasta"),
         csv = os.path.join(config["tempdir"],"closest_in_db.csv")
     shell:
         """
-        parse_paf.py \
-        --paf {input.paf:q} \
+        parse_closest.py \
+        --csv {input.csv:q} \
         --metadata {input.metadata:q} \
         --seqs {input.fasta:q} \
         --csv-out {output.csv:q} \
         --seqs-out {output.fasta:q} \
-        --data-column {params.data_column}
+        --data-column {config[data_column]}
         """
