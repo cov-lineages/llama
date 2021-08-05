@@ -2,6 +2,8 @@
 
 **L**ocal **L**ineage and **M**onophyly **A**ssessment
 
+This repository is no longer supported. All functionality in llama is now available as part of [civet3](https://github.com/cov-ert/civet3).
+
 <img src="./docs/llama_logo.svg" width="450">
 
 ## Quick links
